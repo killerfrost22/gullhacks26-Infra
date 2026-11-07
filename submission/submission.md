@@ -87,4 +87,4 @@ Finally, the frontend creates the editable email and a downloadable **MIME `.eml
 
 Recording manuscript: [Introduction video script](video-script.md).
 
-Devpost thumbnail: [thumbnail.png](thumbnail.png) (1500×1000 PNG, 3:2, 70 KB).
+Devpost thumbnail: [thumbnail.png](thumbnail.png) (1500×1000 PNG, 3:2, 74 KB).
