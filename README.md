@@ -98,7 +98,7 @@ server/                    Express API (run with tsx)
   *.test.ts                Server tests
 src/                       React app
   App.tsx                  The step-by-step flow and loading states
-  components/              PhotoInput, LocationPicker, DetailsPrompt, ContextChips, ResultView, SearchSuggestions, Logo
+  components/              PhotoInput, LocationPicker, DetailsPrompt, ContextChips, ResultView, SearchSuggestions, TechStackDialog, Logo
   lib/                     API client, email draft and .eml builder, place labels, bot-check hook (+ tests)
   styles.css               All styling
 shared/types.ts            Types shared by the server and the app

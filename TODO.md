@@ -7,7 +7,7 @@ The original plan (a public report database with tracking codes, a browse map, a
 **Status (2026-11-07, `474b0ba`)**
 - 57/57 tests pass (`node --import tsx --test server/*.test.ts src/lib/*.test.ts`)
 - `tsc --noEmit` passes
-- `vite build` succeeds, with a warning that the single JS chunk is 649 kB (206 kB gzip)
+- `vite build` succeeds, with a warning that the single JS chunk is 653 kB (208 kB gzip)
 - **Domain acquired:** `fixplease.work`, registered at Porkbun on 2026-11-07 (renews 2027-11-07), using Porkbun nameservers. It currently shows Porkbun's "Coming Soon" parked page over HTTP (apex and `www` resolve to 207.207.210.107 / .229), with no HTTPS.
 - Not deployed yet. The app's name, header, OG tags, README, and `submission/` already use `fixplease.work`.
 - No CI: the repo has no `.github/`
@@ -47,7 +47,6 @@ The original plan (a public report database with tracking codes, a browse map, a
 
 ### App and demo
 
-- [ ] **Header overflows on phones.** At a 390 px viewport the header is about 489 px wide (wordmark, CIVIC AI badge, grounding pill, Privacy link), so the page scrolls sideways. This is phone-first, and judges will open it on phones. Fit it at 360–390 px, e.g. hide the badge, shorten the pill, or move Privacy to the footer.
 - [ ] **ResultView fallback organization makes up names** (`src/components/ResultView.tsx` L32–44). When the model returns no organization, the UI builds `City of <address.city> Public Works`, `<county> Department of Public Works`, or `Local Public Works & Roads Department`, and adds a reason sentence saying it is "the best point of contact". Problems:
   - It reads `location.address.city` (Nominatim town/village/city) instead of `context.place.municipality`. An unincorporated place can therefore become a "City of X" that doesn't exist. The research prompt already uses `municipality === null` to mean "county".
   - The `address.county` cast is dead code: `LocationAddress` and `server/geocoder.ts` never set `county`.
@@ -169,6 +168,8 @@ The original plan (a public report database with tracking codes, a browse map, a
 
 ### Privacy, accessibility, mobile
 - [x] Privacy & Transparency dialog: what is sent to Gemini (including the 30-day retention), nothing stored, OSM requests, bot check, user sends the email.
+- [x] "Tech stack" header tab: a dialog explaining the browser, server, AI, map-data, and source-check layers, with the report flow and a link to the GitHub repo.
+- [x] Header fits phones: the nav drops to a second row when there's no room, so nothing scrolls sideways (checked at 320 and 390 px).
 - [x] Skip link, labelled fields, `role="alert"` / `aria-live` status regions, `:focus-visible` rings, `prefers-reduced-motion`, and focus moves to the result heading.
 - [x] Mobile-first CSS with coarse/fine pointer variants and safe-area insets.
 - [x] Web app manifest and icons, so it can be installed to the home screen.

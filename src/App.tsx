@@ -7,6 +7,7 @@ import { DetailsPrompt } from './components/DetailsPrompt';
 import { ContextChips } from './components/ContextChips';
 import { ResultView } from './components/ResultView';
 import { LogoMark } from './components/Logo';
+import { TechStackDialog } from './components/TechStackDialog';
 import { RequestError, requestJson } from './lib/api';
 import { fetchLocationContext } from './lib/context';
 import { createEmailDraft, type EmailDraft } from './lib/email';
@@ -104,6 +105,7 @@ export function App() {
   const [report, setReport] = useState<Investigation | null>(null);
   const [draft, setDraft] = useState<EmailDraft | null>(null);
   const privacyDialog = useRef<HTMLDialogElement>(null);
+  const techDialog = useRef<HTMLDialogElement>(null);
   const requestController = useRef<AbortController | null>(null);
   const locationStep = useRef<HTMLElement>(null);
   const detailsStep = useRef<HTMLElement>(null);
@@ -213,6 +215,7 @@ export function App() {
               <span className="status-dot-active" />
               <span>AI Grounding Active</span>
             </div>
+            <button type="button" className="btn-link" onClick={() => techDialog.current?.showModal()}>Tech stack</button>
             <button type="button" className="btn-link" onClick={() => privacyDialog.current?.showModal()}>Privacy & Transparency</button>
           </nav>
         </div>
@@ -308,7 +311,7 @@ export function App() {
         </div>
       </footer>
 
-      <dialog ref={privacyDialog} className="privacy-dialog" aria-labelledby="privacy-title" onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close(); }}>
+      <dialog ref={privacyDialog} className="site-dialog" aria-labelledby="privacy-title" onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close(); }}>
         <div className="dialog-body">
           <div className="dialog-head">
             <h2 id="privacy-title">How we handle your report</h2>
@@ -331,6 +334,8 @@ export function App() {
           <button type="button" className="btn btn-primary btn-block" onClick={() => privacyDialog.current?.close()}>Got it</button>
         </div>
       </dialog>
+
+      <TechStackDialog ref={techDialog} onClose={() => techDialog.current?.close()} />
     </>
   );
 }
