@@ -1,97 +1,108 @@
-import { randomBytes, randomInt } from 'node:crypto';
-import { createChallenge, verifySolution } from 'altcha-lib';
-import { deriveKey } from 'altcha-lib/algorithms/sha';
-import type { Challenge } from 'altcha-lib';
-import { z } from 'zod';
-import { ApiError } from './errors.js';
+import { randomBytes } from 'node:crypto';
+import { createChallenge, randomInt, verifySolution, type Challenge, type Payload } from 'altcha-lib';
+import { deriveKey } from 'altcha-lib/algorithms/pbkdf2';
 
-export const CAPTCHA_TTL_MS = 5 * 60_000;
-const MAX_OUTSTANDING_CHALLENGES = 10_000;
-const processSecret = randomBytes(32).toString('hex');
-const hex = (length: number) => z.string().regex(new RegExp(`^[0-9a-f]{${length}}$`));
-const payloadSchema = z.object({
-  challenge: z.object({
-    parameters: z.object({
-      algorithm: z.literal('SHA-256'),
-      cost: z.literal(1),
-      keyLength: z.literal(32),
-      keyPrefix: hex(32),
-      nonce: hex(32),
-      salt: hex(32),
-      expiresAt: z.number().int().positive(),
-    }).strict(),
-    signature: hex(64),
-  }).strict(),
-  solution: z.object({
-    counter: z.number().int().min(0).max(0xffffffff),
-    derivedKey: hex(64),
-    time: z.number().finite().nonnegative().optional(),
-  }).strict(),
-}).strict();
+/** Challenges and solved tokens are valid this long after they are issued. */
+export const CAPTCHA_TTL_SECONDS = 5 * 60;
 
-export interface CaptchaVerifier {
-  challenge: () => Promise<Challenge>;
-  verifyToken: (token: string | undefined) => Promise<void>;
+/**
+ * Work per challenge. The solver tries counters 0, 1, 2, ... and each try is one PBKDF2 run of `cost` rounds.
+ * About 1,500 tries of 1,000 rounds is roughly 0.3–1 s on a mid-range phone with WebCrypto, and one
+ * 1,000-round run (well under 1 ms) for the server to check.
+ */
+export interface CaptchaDifficulty {
+  cost: number;
+  minCounter: number;
+  maxCounter: number;
 }
 
-/** Local issuance state fails closed on restarts; use a single API process or sticky routing. */
-export function createCaptchaVerifier({
-  secret = process.env.CAPTCHA_SECRET?.trim() || processSecret,
-  now = Date.now,
-}: { secret?: string; now?: () => number } = {}): CaptchaVerifier {
-  if (!secret.trim()) throw new Error('CAPTCHA_SECRET must not be empty when explicitly provided.');
-  const outstanding = new Map<string, { signature: string; expiresAt: number }>();
-  let nextPruneAt = 0;
-  const prune = () => {
-    const timestamp = now();
-    if (timestamp < nextPruneAt && outstanding.size < MAX_OUTSTANDING_CHALLENGES) return;
-    for (const [nonce, record] of outstanding) {
-      if (record.expiresAt <= timestamp) outstanding.delete(nonce);
+export const DEFAULT_CAPTCHA_DIFFICULTY: CaptchaDifficulty = { cost: 1_000, minCounter: 1_000, maxCounter: 2_000 };
+
+const ALGORITHM = 'PBKDF2/SHA-256';
+
+export interface CaptchaOptions {
+  /** `CAPTCHA_SECRET`. Without one, a random secret is made per process, so a restart invalidates open challenges. */
+  secret?: string | null;
+  /** Milliseconds since the epoch. Injectable for tests. */
+  now?: () => number;
+  difficulty?: CaptchaDifficulty;
+}
+
+export interface Captcha {
+  /** A signed ALTCHA v2 challenge `{ parameters, signature }`, expiring in five minutes. */
+  createChallenge(): Promise<Challenge>;
+  /** True once for a valid, unexpired, untampered token (base64 JSON `{ challenge, solution }`); false afterwards. */
+  verify(token: string): Promise<boolean>;
+}
+
+function decodeToken(token: string): Payload | null {
+  try {
+    const payload: unknown = JSON.parse(Buffer.from(token, 'base64').toString('utf8'));
+    if (typeof payload !== 'object' || payload === null) return null;
+    const { challenge, solution } = payload as Partial<Payload>;
+    if (typeof challenge !== 'object' || challenge === null) return null;
+    if (typeof challenge.parameters !== 'object' || challenge.parameters === null) return null;
+    if (typeof challenge.signature !== 'string') return null;
+    if (typeof solution !== 'object' || solution === null) return null;
+    return { challenge, solution };
+  } catch {
+    return null;
+  }
+}
+
+export function createCaptcha(options: CaptchaOptions = {}): Captcha {
+  const secret = options.secret || randomBytes(32).toString('hex');
+  const now = options.now ?? Date.now;
+  const difficulty = options.difficulty ?? DEFAULT_CAPTCHA_DIFFICULTY;
+  /** Nonces of tokens already accepted, mapped to their expiry (seconds). Expired entries are pruned. */
+  const used = new Map<string, number>();
+
+  const nowSeconds = () => now() / 1_000;
+
+  function prune() {
+    const current = nowSeconds();
+    for (const [nonce, expiresAt] of used) {
+      if (expiresAt < current) used.delete(nonce);
     }
-    nextPruneAt = timestamp + 60_000;
-  };
-  const invalid = () => new ApiError(403, 'The security check expired or could not be verified. Complete a new security check and try again.', 'CAPTCHA_INVALID');
+  }
 
   return {
-    async challenge() {
+    async createChallenge() {
       prune();
-      if (outstanding.size >= MAX_OUTSTANDING_CHALLENGES) {
-        throw new ApiError(503, 'Security checks are busy. Please wait a minute and try again.', 'CAPTCHA_UNAVAILABLE');
-      }
-      const challenge = await createChallenge({
-        algorithm: 'SHA-256', cost: 1, counter: randomInt(25_000, 75_001), deriveKey,
-        expiresAt: Math.floor((now() + CAPTCHA_TTL_MS) / 1000), hmacSignatureSecret: secret,
+      return createChallenge({
+        algorithm: ALGORITHM,
+        cost: difficulty.cost,
+        counter: randomInt(difficulty.maxCounter, difficulty.minCounter),
+        deriveKey,
+        expiresAt: Math.floor(nowSeconds()) + CAPTCHA_TTL_SECONDS,
+        hmacSignatureSecret: secret,
       });
-      // Recheck after asynchronous signing; never evict a live record to make room.
-      if (outstanding.size >= MAX_OUTSTANDING_CHALLENGES) {
-        throw new ApiError(503, 'Security checks are busy. Please wait a minute and try again.', 'CAPTCHA_UNAVAILABLE');
-      }
-      outstanding.set(challenge.parameters.nonce, {
-        signature: challenge.signature!, expiresAt: challenge.parameters.expiresAt! * 1000,
-      });
-      return challenge;
     },
-    async verifyToken(token) {
-      if (!token?.trim()) {
-        throw new ApiError(403, 'Complete the security check before generating your report.', 'CAPTCHA_REQUIRED');
-      }
+
+    async verify(token) {
+      prune();
+      const payload = decodeToken(token);
+      if (!payload) return false;
+      const { parameters } = payload.challenge;
+      // Every challenge we issue expires; one without expiry was not made here.
+      if (typeof parameters.expiresAt !== 'number' || parameters.expiresAt < nowSeconds()) return false;
+      if (typeof parameters.nonce !== 'string' || used.has(parameters.nonce)) return false;
       try {
-        if (token.length > 8192 || !/^[A-Za-z0-9+/]+={0,2}$/.test(token)) throw invalid();
-        const decoded = Buffer.from(token, 'base64');
-        if (decoded.toString('base64') !== token) throw invalid();
-        const { challenge, solution } = payloadSchema.parse(JSON.parse(decoded.toString('utf8')));
-        const nonce = challenge.parameters.nonce;
-        const record = outstanding.get(nonce);
-        if (!record || record.signature !== challenge.signature || record.expiresAt <= now()) throw invalid();
-        const result = await verifySolution({ challenge, solution, deriveKey, hmacSignatureSecret: secret });
-        if (!result.verified || record.expiresAt <= now()) throw invalid();
-        // The identity check and delete are synchronous after crypto awaits. Exactly one concurrent request wins.
-        if (outstanding.get(nonce) !== record) throw invalid();
-        outstanding.delete(nonce);
+        const result = await verifySolution({
+          challenge: payload.challenge,
+          solution: payload.solution,
+          deriveKey,
+          hmacSignatureSecret: secret,
+        });
+        if (!result.verified) return false;
       } catch {
-        // Never expose payloads, cryptographic errors, or the signing secret in public responses.
-        throw invalid();
+        // Malformed parameters that still carry a valid signature can't exist, but never let one crash the request.
+        return false;
       }
+      // Re-check after the await: two copies of one token may have been verified concurrently.
+      if (used.has(parameters.nonce)) return false;
+      used.set(parameters.nonce, parameters.expiresAt);
+      return true;
     },
   };
 }

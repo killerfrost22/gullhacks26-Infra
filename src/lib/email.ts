@@ -1,121 +1,133 @@
-import type { Investigation, PreparedPhoto } from '../../shared/types';
-import { shortPlace } from './place';
+import type { Investigation, IssueKind, Place } from '../../shared/types';
+import { describePlace, stripCoordinates } from './place';
 
 export interface EmailDraft {
+  /** A published, verified address, or `''` so the user fills it in. */
   to: string;
   subject: string;
+  /** Lines separated by `\n`. */
   body: string;
 }
 
-export function isSafeEmail(value: string): boolean {
-  return /^[^\s@<>:,;\r\n]+@[^\s@<>:,;\r\n]+\.[^\s@<>:,;\r\n]+$/.test(value);
+const KIND_TITLES: Record<IssueKind, string> = {
+  pothole: 'Pothole',
+  road_damage: 'Road damage',
+  streetlight: 'Street light problem',
+  traffic_signal: 'Traffic signal problem',
+  sign: 'Damaged sign',
+  sidewalk: 'Sidewalk damage',
+  drainage: 'Drainage problem',
+  graffiti: 'Graffiti',
+  litter: 'Litter',
+  tree: 'Tree problem',
+  utility: 'Utility problem',
+  other: 'Problem',
+};
+
+const EMAIL_PATTERN = /^[^\s@<>()",;:]+@[^\s@<>()",;:]+\.[^\s@<>()",;:]+$/;
+const oneLine = (text: string) => text.replace(/[\r\n]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+
+/** The email the user sends themselves. Only facts from the report and the pin; nothing made up. */
+export function createEmailDraft(input: {
+  report: Investigation;
+  place: Place;
+  details: string;
+  photoFileName: string;
+}): EmailDraft {
+  const { report, place, details, photoFileName } = input;
+  const { issue, responsibility } = report;
+  const published = responsibility.email?.value.trim() ?? '';
+  const to = EMAIL_PATTERN.test(published) ? published : '';
+
+  const title = stripCoordinates(oneLine(issue.title)) || KIND_TITLES[issue.kind];
+  const where = describePlace(place, report.context);
+  const recipient = responsibility.department?.trim() || responsibility.organization?.trim();
+  const summary = stripCoordinates(issue.summary.trim());
+  const note = details.trim();
+
+  const lines = [recipient ? `Hello ${oneLine(recipient)},` : 'Hello,', ''];
+  lines.push(`I'm writing to report a problem that needs repair: ${title.replace(/[.!?]+$/, '')}.`);
+  if (summary) lines.push('', summary);
+  lines.push('');
+  if (where) lines.push(`Location: ${where}`);
+  if (note) lines.push(`${where ? 'More detail' : 'Location and detail'}: ${note}`);
+  if (where || note) lines.push('');
+  lines.push(`I've attached a photo (${photoFileName}).`, '');
+  lines.push('Could you please arrange a repair, or let me know if this should go to a different office?', '');
+  lines.push('Thank you,');
+
+  return {
+    to,
+    subject: oneLine(where ? `${title} near ${where}` : title),
+    body: lines.join('\n'),
+  };
 }
 
-/** The email a resident would write: clear issue, location, and the attached photo. No raw GPS coordinates or AI search clues. */
-export function createEmailDraft(report: Investigation, _details?: string): EmailDraft {
-  const { responsibility: office, location, issue, context } = report;
-  const to = office.email && office.emailSourceUrl && isSafeEmail(office.email) ? office.email : '';
-  const issueName = issue.type === 'pothole' ? 'Pothole' : issue.type === 'light_outage' ? 'Light outage' : issue.title;
-  const address = location.address;
-  const subjectLocation = address?.street && address.city
-    ? `${address.street}, ${address.city}`
-    : address?.street || address?.city || '';
-  const place = shortPlace(location, context);
-  const locationPhrase = place ? ` at ${place}` : '';
-  const cleanSummary = (issue.summary || '')
-    .replace(/\(?\b-?\d{1,3}\.\d{4,}\s*,\s*-?\d{1,3}\.\d{4,}\b\)?/g, '')
-    .replace(/\bcoordinates?:\s*/gi, '')
-    .trim();
-  const rawBody = [
-    'Hello,',
-    `I would like to report a maintenance issue${locationPhrase}. ${cleanSummary}`,
-    'A photo of the issue is attached for reference.',
-    'Thank you,',
-  ].filter(Boolean).join('\n\n');
-  // Rigorous scrub: ensure absolutely no coordinates exist in the draft body
-  const body = rawBody
-    .replace(/\(?\b-?\d{1,3}\.\d{3,}\s*,\s*-?\d{1,3}\.\d{3,}\b\)?/g, '')
-    .replace(/\bGPS:\s*-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?\b/gi, '')
-    .replace(/\bCoordinates:\s*-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?\b/gi, '')
-    .replace(/\bat\s*\./g, '.')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-  return { to, subject: subjectLocation ? `${issueName} — ${subjectLocation}` : issueName, body };
+export function buildMailto(draft: EmailDraft): string {
+  // `@` stays literal: some mail apps don't decode %40 in the address.
+  const to = encodeURIComponent(draft.to).replace(/%40/g, '@');
+  const body = draft.body.replace(/\r?\n/g, '\r\n');
+  return `mailto:${to}?subject=${encodeURIComponent(draft.subject)}&body=${encodeURIComponent(body)}`;
 }
 
-/** The prepared photo as a File, for the system share sheet. */
-export function photoFile(photo: PreparedPhoto): File {
-  const [, base64 = ''] = photo.dataUrl.split(',', 2);
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
-  return new File([bytes], photo.fileName, { type: 'image/jpeg' });
-}
-
-function base64Utf8(value: string): string {
-  const bytes = new TextEncoder().encode(value);
-  const parts: string[] = [];
-  for (let offset = 0; offset < bytes.length; offset += 8192) {
-    parts.push(String.fromCharCode(...bytes.subarray(offset, offset + 8192)));
+function bytesToBase64(bytes: Uint8Array): string {
+  let base64 = '';
+  // Chunks are a multiple of 3 bytes so each piece encodes without padding in the middle.
+  for (let offset = 0; offset < bytes.length; offset += 0x6000) {
+    base64 += btoa(String.fromCharCode(...bytes.subarray(offset, offset + 0x6000)));
   }
-  return btoa(parts.join(''));
+  return base64;
 }
 
-function wrapBase64(value: string): string {
-  return value.match(/.{1,76}/g)?.join('\r\n') ?? '';
-}
+const wrap76 = (base64: string) => base64.match(/.{1,76}/g)?.join('\r\n') ?? '';
 
-function encodeSubject(value: string): string {
+/** RFC 2047 encoded-words, each within the 75-character limit, split on whole characters. */
+function encodeHeader(text: string): string {
+  if (/^[\x20-\x7e]*$/.test(text)) return text;
   const encoder = new TextEncoder();
-  const chunks: string[] = [];
+  const words: string[] = [];
   let chunk = '';
-  let size = 0;
-  for (const character of value.replace(/[\r\n]+/g, ' ')) {
-    const nextSize = encoder.encode(character).length;
-    if (size + nextSize > 42) {
-      chunks.push(chunk);
+  for (const char of text) {
+    // 45 bytes → 60 base64 characters, plus 12 for `=?UTF-8?B??=`.
+    if (encoder.encode(chunk + char).length > 45) {
+      words.push(chunk);
       chunk = '';
-      size = 0;
     }
-    chunk += character;
-    size += nextSize;
+    chunk += char;
   }
-  chunks.push(chunk);
-  return chunks.map((part) => `=?UTF-8?B?${base64Utf8(part)}?=`).join('\r\n ');
+  if (chunk) words.push(chunk);
+  return words.map((word) => `=?UTF-8?B?${bytesToBase64(encoder.encode(word))}?=`).join('\r\n ');
 }
 
-/** RFC 5322/MIME draft with a metadata-stripped image, not a sent message. */
-export function buildEmailFile(draft: EmailDraft, photo: PreparedPhoto, date = new Date()): string {
-  if (draft.to && !isSafeEmail(draft.to)) throw new Error('The recipient email is not valid.');
-  const image = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/]+={0,2})$/.exec(photo.dataUrl);
-  if (!image) throw new Error('The prepared photo is not a supported image.');
-  const extension = image[1] === 'jpeg' ? 'jpg' : image[1];
+/** A draft email file with the photo attached. Mail apps open it as an unsent message (`X-Unsent: 1`). */
+export async function buildEmlFile(draft: EmailDraft, photo: { blob: Blob; fileName: string }): Promise<File> {
   const boundary = `fixplease-${crypto.randomUUID()}`;
-  return [
+  const fileName = photo.fileName.replace(/[^\w.-]/g, '_') || 'photo.jpg';
+  const photoBytes = new Uint8Array(await photo.blob.arrayBuffer());
+  const textBytes = new TextEncoder().encode(draft.body.replace(/\r?\n/g, '\r\n'));
+  const headers = [
+    ...(draft.to ? [`To: ${oneLine(draft.to)}`] : []),
+    `Subject: ${encodeHeader(oneLine(draft.subject))}`,
     'X-Unsent: 1',
-    `Date: ${date.toUTCString()}`,
-    ...(draft.to ? [`To: ${draft.to}`] : []),
-    `Subject: ${encodeSubject(draft.subject)}`,
     'MIME-Version: 1.0',
     `Content-Type: multipart/mixed; boundary="${boundary}"`,
+  ];
+  const message = [
+    ...headers,
     '',
     `--${boundary}`,
     'Content-Type: text/plain; charset=UTF-8',
     'Content-Transfer-Encoding: base64',
     '',
-    wrapBase64(base64Utf8(draft.body.replace(/\r?\n/g, '\r\n'))),
+    wrap76(bytesToBase64(textBytes)),
     `--${boundary}`,
-    `Content-Type: image/${image[1]}; name="report-photo.${extension}"`,
+    `Content-Type: image/jpeg; name="${fileName}"`,
+    `Content-Disposition: attachment; filename="${fileName}"`,
     'Content-Transfer-Encoding: base64',
-    `Content-Disposition: attachment; filename="report-photo.${extension}"`,
     '',
-    wrapBase64(image[2]),
+    wrap76(bytesToBase64(photoBytes)),
     `--${boundary}--`,
     '',
   ].join('\r\n');
-}
-
-export function buildMailto(draft: EmailDraft): string {
-  if (draft.to && !isSafeEmail(draft.to)) throw new Error('The recipient email is not valid.');
-  return `mailto:${encodeURIComponent(draft.to)}?subject=${encodeURIComponent(draft.subject)}&body=${encodeURIComponent(draft.body)}`;
+  return new File([message], 'fixplease-report.eml', { type: 'message/rfc822' });
 }

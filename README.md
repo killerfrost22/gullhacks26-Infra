@@ -18,6 +18,7 @@ Our GullHacks 2026 project. This repo (`gullhacks26-Infra`) is where the team ke
 - [Deploy](#deploy)
 - [Privacy](#privacy)
 - [API](#api)
+- [Credits](#credits)
 
 ## How it works
 
@@ -35,14 +36,14 @@ flowchart LR
 1. **Snap.** The photo is shrunk on the device and its hidden metadata is stripped. If it has GPS, we use it to suggest the spot.
 2. **Pin.** Photo location, "I'm standing here", address search, or tap the map. You confirm the pin.
 3. **Tell us more.** One free-text box: where exactly it is and what you noticed. This is often what separates "the city" from "the state highway department" or "the power company".
-4. **Find who fixes it.** The server pulls map facts for the pin: the nearest road and its route number, whether you're inside city limits (US Census), the campus you're on and its website, and mapped streetlights and who runs them (OpenStreetMap via Overpass, with Nominatim as the fallback when Overpass is overloaded). Gemini then reads the photo and searches official city, county, state, campus, and utility sites. A typical report takes about 5–7 seconds.
+4. **Find who fixes it.** The server pulls map facts for the pin: the nearest road and its route number, whether you're inside a city, town, or township (U.S. Census), the campus you're on and its website, and mapped streetlights and who runs them (OpenStreetMap via Overpass, with Nominatim as the fallback when Overpass is overloaded). Gemini then reads the photo and searches official city, county, state, campus, and utility sites. A full test report took 16 seconds from tap to result; the server gives up after 45.
 5. **Send.** On phones, "Send with photo" opens the share sheet with the photo attached. On desktop, download the email with the photo already attached, or open your mail app. We never send anything for you.
 
 ### Why you can trust the result
 
 - A link only counts if the server can open it. Pages Google's search returned count (their redirect links are resolved to the real page first). The model can also name an office's page that search didn't return, but it counts only if it's on a government or university domain, on a site search already returned, or on the campus's own website, and it loads right now. A made-up link never loads, so it's dropped.
-- "Confirmed on an official site" means the sentence that proves who covers this road or asset was found word for word on that page. Otherwise the result says "Best match. Worth a quick check."
-- An email address or phone number only shows up if it's published on an official page we read. If the model doesn't supply one, we look on those pages for a repair or service inbox on the office's own domain (e.g. `streetmaintenance@city.gov`). Personal, press, HR, and webmaster addresses are never picked. Many cities only take reports through a web form, so the result often links to that form and leaves the email's To line for you.
+- "Confirmed on an official site" means the sentence that proves who covers this road or asset was found word for word on an official page we loaded. "Best match. Worth a quick check." needs at least one official page we loaded. With neither, the result says we couldn't identify the office and shows only the map facts. We never make up an office name.
+- An email address or phone number only shows up if it's published on an official page we read, and an email must be a repair or service inbox on the office's own domain (e.g. `streetmaintenance@city.gov`). Personal, press, HR, and webmaster addresses are never picked. Contact details and links the model writes into its own text are removed unless they're the checked ones. Many cities only take reports through a web form, so the result often links to that form and leaves the email's To line for you.
 - If Gemini refuses an answer for repeating web text too closely, the server retries once without quotes. That result can be at most "best match".
 
 ## Run it locally
@@ -104,26 +105,36 @@ Demoing on shared venue Wi-Fi? Everyone shows up as one address, so raise `RESEA
 
 ```
 server/                    Express API (run with tsx)
-  index.ts                 Routes, rate limits, same-origin checks, serves dist/ in production
-  research.ts              Investigation pipeline: map context → Gemini research → report → verification
-  gemini-client.ts         Gemini Interactions API calls; provider errors mapped to safe messages
-  gemini-response.ts       Parses grounded research and the structured report
-  research-schema.ts       Zod schema for the report Gemini formats
-  provenance.ts            Which sources and contacts count (official domains, repair inboxes)
-  source-verification.ts   Fetches cited pages safely and checks quotes and contacts on them
-  context.ts               Map facts: Overpass roads/campus/streetlights, US Census city/county, Nominatim fallback
-  geocoder.ts              Nominatim search and reverse lookup, one request per second
-  captcha.ts               Self-hosted ALTCHA proof-of-work challenges
+  index.ts                 Entry: loads .env, wires the real services, listens on HOST:PORT
+  app.ts                   Routes, rate limits, same-origin check, captcha check, serves dist/ in production
+  config.ts                Reads PORT, HOST, TRUST_PROXY, RESEARCH_RATE_LIMIT
+  captcha.ts               Self-hosted ALTCHA proof-of-work challenges, single-use
   validation.ts, errors.ts Request parsing and the { error, code } error type
-  *.test.ts                Server tests
+  geo/                     Map facts and address lookup
+    nominatim.ts           Search and reverse lookup, one request per second, cached
+    overpass.ts            Nearest road and route number, campus, street lamps; 60 s backoff after a failure
+    census.ts              U.S. Census: incorporated city or unincorporated county
+    context.ts             Runs all three in parallel (9 s cap), Nominatim as the fallback
+  research/                Who fixes it
+    pipeline.ts            Map facts → Gemini research → structured report → page checks → result
+    gemini.ts              Gemini Interactions API calls; provider errors mapped to safe messages
+    prompt.ts, schema.ts   Research and format prompts; Zod schema for the report
+    fetch-page.ts          Loads cited pages safely (public addresses only, size and time limits)
+    verify.ts              Checks quotes, emails, and phones on the loaded pages
+    provenance.ts          Which domains are official and which inboxes count
+  **/*.test.ts             Server tests
 src/                       React app
-  App.tsx                  The step-by-step report flow and loading states (/)
-  TechPage.tsx             The tech stack page (/tech)
-  components/              PhotoInput, LocationPicker, DetailsPrompt, ContextChips, ResultView, SearchSuggestions, SiteChrome (shared header/footer), Logo
-  lib/                     API client, email draft and .eml builder, place labels, bot-check hook (+ tests)
-  styles.css               All styling
+  main.tsx, App.tsx        Entry, fonts, and routes: / (report), /tech, /privacy
+  router.tsx               Tiny History API router
+  flow/                    The report: PhotoStep, PinStep, PinMap (Leaflet, loaded on demand), NoteStep,
+                           Investigating, ResultView, EmailComposer, ContextChips, SearchSuggestions; state.ts
+  pages/                   TechPage (/tech), PrivacyPage (/privacy)
+  components/              Mark (logo and paint ring), SiteChrome (header and footer)
+  lib/                     API client, captcha worker, photo prep, email and .eml builder, place labels (+ tests)
+  styles/                  tokens.css (colors, type, spacing), then base, layout, flow, result, pages
+  dev/                     Scene harness for design review: ?scene=<name> in dev only, absent from builds
 shared/types.ts            Types shared by the server and the app
-public/                    Favicon, app icons, web app manifest
+public/                    Favicon, app icons, web app manifest, share image
 submission/                Devpost write-up and video script
 TODO.md                    Feature roadmap
 ```
@@ -137,6 +148,8 @@ npm test          # server and client unit tests (node:test via tsx)
 npx tsc --noEmit  # type check
 npm run build     # type check + production build into dist/
 ```
+
+For design changes, also follow the review loop in [`AGENTS.md`](AGENTS.md). In `npm run dev`, add `?scene=<name>` to the URL to open any state without live calls, e.g. <http://127.0.0.1:5173/?scene=result-best-match>. The scene list is in `src/dev/scenes.ts`. Scenes exist only in dev builds.
 
 ## Working on it as a team
 
@@ -157,6 +170,7 @@ npm run build     # type check + production build into dist/
 | "That's a lot of reports in a short time." | Raise `RESEARCH_RATE_LIMIT` in `.env` and restart, or wait 15 minutes. |
 | "I'm standing here" or the bot check fails on a phone | They need HTTPS. Use the tunnel setup above. |
 | "Other formats, including HEIC, are not supported." | Export the photo as JPEG, or set the iPhone camera to Formats → "Most Compatible". |
+| Map facts show the city but no road, campus, or streetlights | The public Overpass server is overloaded or down; the server skips it for 60 s after a failure. Point `OVERPASS_URL` in `.env` at another instance and restart. |
 | `npm` fails in WSL with `node: not found` | Node is only installed on Windows. Run npm from PowerShell or Git Bash. |
 
 ## Deploy
@@ -199,3 +213,28 @@ Any host that runs one long-lived Node process works (Render, Railway, Fly.io, a
 | `POST /api/investigate` | `{ photoDataUrl, location, details }` plus the `X-Captcha-Token` header returns who fixes it, the evidence, and contacts. |
 
 Errors are always `{ error, code }`. Shared types live in `shared/types.ts`.
+
+## Credits
+
+GullHacks rules allow public frameworks if we credit them. Fix Please is built on:
+
+| Project | Use | License |
+|---|---|---|
+| [React](https://react.dev) 19 | User interface | MIT |
+| [Vite](https://vite.dev) 8, [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react) | Dev server and production build | MIT |
+| [TypeScript](https://www.typescriptlang.org) 7 | Types across the app and server | Apache-2.0 |
+| [Express](https://expressjs.com) 5, [express-rate-limit](https://github.com/express-rate-limit/express-rate-limit) | API server and request limits | MIT |
+| [Zod](https://zod.dev) 4 | Request and model-output schemas | MIT |
+| [tsx](https://tsx.is), [concurrently](https://github.com/open-cli-tools/concurrently), [dotenv](https://github.com/motdotla/dotenv) | Running the server, dev scripts, `.env` loading | MIT, MIT, BSD-2-Clause |
+| [Leaflet](https://leafletjs.com) | Map | BSD-2-Clause |
+| [exifr](https://github.com/MikeKovarik/exifr) | Reading photo GPS on the device | MIT |
+| [DOMPurify](https://github.com/cure53/DOMPurify) | Sanitizing Google search suggestions | MPL-2.0 or Apache-2.0 |
+| [ALTCHA](https://altcha.org) (`altcha-lib`) | Self-hosted proof-of-work bot check | MIT |
+| [Lucide](https://lucide.dev) (`lucide-react`) | Icons | ISC |
+| [Public Sans](https://public-sans.digital.gov) and [Big Shoulders](https://github.com/xotypeco/big_shoulders) via [Fontsource](https://fontsource.org) | Body and display type, self-hosted | OFL-1.1 |
+
+Data and services:
+
+- Map tiles, addresses, roads, campuses, and streetlights: © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors (ODbL), via the OpenStreetMap tile server, [Nominatim](https://nominatim.org), and the [Overpass API](https://overpass-api.de).
+- City limits and counties: [U.S. Census Bureau Geocoder](https://geocoding.geo.census.gov).
+- Photo reading and research: [Google Gemini API](https://ai.google.dev) with Google Search grounding and URL context.

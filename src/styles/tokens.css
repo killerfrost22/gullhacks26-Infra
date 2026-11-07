@@ -1,0 +1,115 @@
+/*
+ * Fix Please design tokens.
+ * Concept: the street (asphalt, survey paint, the painted centre line) and the paperwork
+ * (warm paper, ink, rubber stamps). Survey orange is the one accent; it marks the spot and the
+ * primary action, nothing else.
+ */
+
+/* Metric-matched fallbacks so the swap to the web fonts doesn't shift the layout. */
+@font-face {
+  font-family: 'Public Sans Fallback';
+  src: local('Arial'), local('Helvetica Neue'), local('Helvetica');
+  size-adjust: 104%;
+  ascent-override: 92%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Big Shoulders Fallback';
+  /* Measured against Big Shoulders 800 on a bold headline: Arial Narrow runs 18% wider. */
+  src: local('Arial Narrow');
+  size-adjust: 82%;
+  ascent-override: 100%;
+  descent-override: 25%;
+  line-gap-override: 0%;
+}
+
+:root {
+  /* Color: street */
+  --asphalt: #16181a;
+  --asphalt-2: #212428;
+  --asphalt-3: #2e3236;
+  --on-asphalt: #ece8df;
+  --on-asphalt-muted: #aaa59b;
+  --centre-line: #f2c230;
+
+  /* Color: paperwork */
+  --paper: #f4f1ea;
+  --card: #fcfbf7;
+  --ink: #16181a;
+  --ink-2: #2b2f33;
+  --muted: #565c62;
+  --line: #d9d3c5;
+  --line-strong: #a39b8a;
+
+  /* Color: survey paint (the one accent) */
+  --paint: #ff5b1a;
+  --paint-hover: #ff7038;
+  --paint-press: #e84a0c;
+  --paint-ink: #b03a0b;
+  --paint-on-dark: #ff7a45;
+  --paint-wash: #ffe5d9;
+
+  /* Color: verdict inks */
+  --ok: #1c6a46;
+  --ok-wash: #e2efe5;
+  --warn: #855000;
+  --warn-wash: #faeed3;
+  --danger: #a3261b;
+  --danger-wash: #fbe5e1;
+
+  --focus: #1a56db;
+  --focus-on-dark: #a7c1ff;
+
+  /* Type */
+  --font-body: 'Public Sans Variable', 'Public Sans Fallback', system-ui, sans-serif;
+  --font-display: 'Big Shoulders Variable', 'Big Shoulders Fallback', 'Arial Narrow', sans-serif;
+
+  /* Modular scale, ratio 1.25, fluid between 320 and 1440 px */
+  --step--1: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
+  --step-0: clamp(1rem, 0.97rem + 0.15vw, 1.0625rem);
+  --step-1: clamp(1.1875rem, 1.13rem + 0.3vw, 1.375rem);
+  --step-2: clamp(1.4375rem, 1.32rem + 0.55vw, 1.75rem);
+  --step-3: clamp(1.75rem, 1.5rem + 1.2vw, 2.5rem);
+  --step-4: clamp(2.25rem, 1.8rem + 2.2vw, 3.75rem);
+  --step-5: clamp(3rem, 2.2rem + 4vw, 6.25rem);
+
+  --leading-tight: 0.92;
+  --leading-snug: 1.2;
+  --leading-body: 1.55;
+  --measure: 66ch;
+
+  /* Space (4 px base) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 6rem;
+  --gutter: clamp(1rem, 0.6rem + 2vw, 2.5rem);
+
+  /* Shape */
+  --radius-1: 6px;
+  --radius-2: 10px;
+  --radius-3: 16px;
+  --radius-pill: 999px;
+  --shadow-sheet: 0 1px 0 rgb(22 24 26 / 6%), 0 18px 40px -24px rgb(22 24 26 / 35%);
+  --shadow-lift: 0 10px 24px -12px rgb(22 24 26 / 45%);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-stamp: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-1: 140ms;
+  --dur-2: 240ms;
+  --dur-3: 420ms;
+
+  --tap: 44px;
+  --header-h: 60px;
+
+  color-scheme: light;
+}

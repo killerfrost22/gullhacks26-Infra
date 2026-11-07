@@ -22,7 +22,7 @@ Fix Please guides users through a short reporting flow:
 4. **Find who likely fixes it.** The app combines the photo, location, note, and available geographic context with Gemini’s search of official sources. It presents an organization, an explanation, supporting links, and published contact details when available.
 5. **Review and send.** The user can edit an email draft, download an email file with the photo attached, or use file sharing on a supported phone. An official reporting page is available when found. The user—not Fix Please—decides what to send and sends it from their own account.
 
-The result distinguishes official-site support from a best match or a local-jurisdiction guess. A plausible answer is not presented as guaranteed ownership, and a missing public email address is not filled with an invented one.
+The result distinguishes official-site support from a best match, and says plainly when the office can't be identified, showing only the map facts instead of a guessed name. A plausible answer is not presented as guaranteed ownership, and a missing public email address is not filled with an invented one.
 
 Fix Please has no accounts, report database, or analytics. The prepared photo, confirmed pin, and note are sent to Google Gemini; Google may retain search-grounded requests for up to 30 days under its API terms. OpenStreetMap services also receive map and address requests. The app is for routine maintenance, not emergencies.
 
@@ -72,7 +72,7 @@ Finally, the frontend creates the editable email and a downloadable **MIME `.eml
 | TypeScript | Shared frontend and backend types and application logic |
 | React | Step-by-step reporting interface and results view |
 | Vite | Frontend development server and production build |
-| CSS, Lucide React, Barlow fonts | Responsive layout, icons, and typography |
+| CSS, Lucide React, Public Sans and Big Shoulders fonts | Responsive layout, icons, and typography |
 | Node.js and Express | API server and investigation orchestration |
 | Google Gemini API | Multimodal issue analysis and research-to-report generation |
 | Google Search grounding and URL context | Live source discovery and page research |
