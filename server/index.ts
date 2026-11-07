@@ -174,11 +174,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   createApp().listen(port, host, (error?: NodeJS.ErrnoException) => {
     if (error?.code === 'EADDRINUSE') {
       // Otherwise the dev proxy quietly forwards /api to whatever else owns the port.
-      console.error(`\nPort ${port} is already used by another program, so the fixplease.app API did not start.\nSet PORT in .env to a free port (for example ${port + 3}) and restart.\n`);
+      console.error(`\nPort ${port} is already used by another program, so the fixplease.work API did not start.\nSet PORT in .env to a free port (for example ${port + 3}) and restart.\n`);
       process.exit(1);
     }
     if (error) throw error;
     const displayHost = host.includes(':') ? `[${host}]` : host;
-    console.log(`fixplease.app ready at http://${displayHost}:${port}`);
+    console.log(`fixplease.work ready at http://${displayHost}:${port}`);
   });
 }

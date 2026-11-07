@@ -8,7 +8,7 @@ The original plan (a public report database with tracking codes, a browse map, a
 - 57/57 tests pass (`node --import tsx --test server/*.test.ts src/lib/*.test.ts`)
 - `tsc --noEmit` passes
 - `vite build` succeeds, with a warning that the single JS chunk is 649 kB (206 kB gzip)
-- Not deployed: `fixplease.app` does not resolve
+- Not deployed: `fixplease.work` has DNS records but nothing answers over HTTPS yet
 - No CI: the repo has no `.github/`
 
 **Priority legend**
@@ -27,7 +27,7 @@ The original plan (a public report database with tracking codes, a browse map, a
   - `GEOCODER_USER_AGENT`: include a real contact, as the OSM usage policy requires
 
   Fallback: a `cloudflared` tunnel (README, "Try it on your phone"). Camera, geolocation, and the bot check all need HTTPS.
-- [ ] **Domain.** `fixplease.app` is used in the header, `index.html` OG tags, README, and `submission/`, but it does not resolve. Either point it at the deploy or stop presenting it as a live URL.
+- [ ] **Domain.** `fixplease.work` is used in the header, `index.html` OG tags, README, and `submission/`, but nothing is served there yet. Point it at the deploy, or stop presenting it as a live URL until it is.
 - [ ] **Demo rate limit.** Set `RESEARCH_RATE_LIMIT` well above the default of 5 per 15 min per IP. Everyone on venue Wi-Fi shares one IP.
 - [ ] **ResultView fallback organization makes up names** (`src/components/ResultView.tsx` L32–44). When the model returns no organization, the UI builds `City of <address.city> Public Works`, `<county> Department of Public Works`, or `Local Public Works & Roads Department`, and adds a reason sentence saying it is "the best point of contact". Problems:
   - It reads `location.address.city` (Nominatim town/village/city) instead of `context.place.municipality`. An unincorporated place can therefore become a "City of X" that doesn't exist. The research prompt already uses `municipality === null` to mean "county".

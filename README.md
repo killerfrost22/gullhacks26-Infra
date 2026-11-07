@@ -1,4 +1,4 @@
-# Fix Please · fixplease.app
+# Fix Please · fixplease.work
 
 Spot a pothole, a dead streetlight, or something broken on campus? Take a photo, drop a pin, and Fix Please works out who is responsible for that exact spot and writes the email for you, photo attached.
 

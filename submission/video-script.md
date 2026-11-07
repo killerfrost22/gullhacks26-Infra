@@ -101,7 +101,7 @@ Read the **Voiceover** passages aloud. **Screen** directions describe what to re
 
 ## Screen 9 — Close on the outcome | 02:19–02:30
 
-**Screen:** Close the privacy dialog and return to the result, keeping the responsible office and draft visible. Finish with the brand and `fixplease.app` as an end card.
+**Screen:** Close the privacy dialog and return to the result, keeping the responsible office and draft visible. Finish with the brand and `fixplease.work` as an end card.
 
 **Voiceover:**
 

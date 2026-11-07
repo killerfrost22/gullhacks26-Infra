@@ -2,7 +2,7 @@
 
 **See something broken? Snap it. We’ll find who fixes it.**
 
-Fix Please (`fixplease.app`) is a phone-first web app that helps people identify who likely maintains a broken piece of local infrastructure and prepare a report for that organization.
+Fix Please (`fixplease.work`) is a phone-first web app that helps people identify who likely maintains a broken piece of local infrastructure and prepare a report for that organization.
 
 ## 1) Inspiration
 

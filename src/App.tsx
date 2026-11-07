@@ -201,10 +201,10 @@ export function App() {
       <a className="skip-link" href="#main">Skip to content</a>
       <header className="site-header">
         <div className="container header-inner">
-          <a className="brand" href="/" aria-label="fixplease.app, start over" onClick={(event) => { event.preventDefault(); startOver(); }}>
+          <a className="brand" href="/" aria-label="fixplease.work, start over" onClick={(event) => { event.preventDefault(); startOver(); }}>
             <LogoMark size={36} />
             <div className="brand-text">
-              <span className="wordmark">fixplease<span>.app</span></span>
+              <span className="wordmark">fixplease<span>.work</span></span>
               <span className="brand-badge">CIVIC AI</span>
             </div>
           </a>
@@ -304,7 +304,7 @@ export function App() {
 
       <footer className="site-footer">
         <div className="container footer-inner">
-          <p>fixplease.app · Map data © OpenStreetMap contributors</p>
+          <p>fixplease.work · Map data © OpenStreetMap contributors</p>
         </div>
       </footer>
 
