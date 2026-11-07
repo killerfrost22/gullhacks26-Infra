@@ -77,9 +77,9 @@ You need:
 
    This starts the API and the web app together. It's ready when the terminal shows `[api] fixplease.work ready at http://127.0.0.1:8787`.
 
-4. **Open <http://127.0.0.1:5173>.** Use `127.0.0.1`, not `localhost`: Vite only listens on `127.0.0.1`, and if another project is running on `localhost:5173` you'd get that one instead. Code changes reload on their own.
+4. **Open <http://127.0.0.1:5180>.** The dev server uses port 5180, not Vite's usual 5173, so it doesn't collide with other projects. Code changes reload on their own.
 
-5. **Check the key.** <http://127.0.0.1:5173/api/health> should show `"researchConfigured":true`. If it shows `false`, photo, map, and address search still work, but generating a report shows "Report lookup is offline right now." until the key is set.
+5. **Check the key.** <http://127.0.0.1:5180/api/health> should show `"researchConfigured":true`. If it shows `false`, photo, map, and address search still work, but generating a report shows "Report lookup is offline right now." until the key is set.
 
 6. **Stop it** with `Ctrl+C`. Restart `npm run dev` after any `.env` change.
 
@@ -149,7 +149,7 @@ npx tsc --noEmit  # type check
 npm run build     # type check + production build into dist/
 ```
 
-For design changes, also follow the review loop in [`AGENTS.md`](AGENTS.md). In `npm run dev`, add `?scene=<name>` to the URL to open any state without live calls, e.g. <http://127.0.0.1:5173/?scene=result-best-match>. The scene list is in `src/dev/scenes.ts`. Scenes exist only in dev builds.
+For design changes, also follow the review loop in [`AGENTS.md`](AGENTS.md). In `npm run dev`, add `?scene=<name>` to the URL to open any state without live calls, e.g. <http://127.0.0.1:5180/?scene=result-best-match>. The scene list is in `src/dev/scenes.ts`. Scenes exist only in dev builds.
 
 ## Working on it as a team
 
@@ -163,7 +163,7 @@ For design changes, also follow the review loop in [`AGENTS.md`](AGENTS.md). In 
 
 | Symptom | Fix |
 |---|---|
-| A different site opens at `localhost:5173` | Use <http://127.0.0.1:5173>. |
+| A different site opens, or "Port 5180 is already in use" | Another program holds port 5180. Stop it, or change `port` in `vite.config.ts`. Fix Please stays off 5173 because other projects use it. |
 | "Port … is already used by another program" | Set `PORT` in `.env` to a free port and restart `npm run dev`. |
 | "Report lookup is offline right now." | `GEMINI_API_KEY` is missing or invalid. Set it in `.env` and restart. |
 | "We've hit our lookup limit for now." | The key's project is out of Gemini or Search grounding quota. Check billing and limits in [AI Studio](https://aistudio.google.com/usage). |

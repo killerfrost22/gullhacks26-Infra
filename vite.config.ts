@@ -10,7 +10,8 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: {
       host: '127.0.0.1',
-      port: 5173,
+      // Not Vite's default 5173: other local projects (e.g. Crucible) use it, and `localhost:5173` would open theirs.
+      port: 5180,
       strictPort: true,
       // Keep the browser's Host header: /api/investigate requires Origin and Host to match. The string shorthand
       // would set changeOrigin: true and rewrite Host to the API's port.
