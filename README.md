@@ -27,6 +27,7 @@ Our GullHacks 2026 project. This repo (`gullhacks26-Infra`) is where the team ke
 | Name | Role | GitHub |
 |---|---|---|
 | Nyles Burton | Documentation | [@NBurtonII](https://github.com/NBurtonII) |
+| Gabby Ao | Business Analyst | [@gabbyao](https://github.com/gabbyao) |
 | TBD | | |
 
 ## Abstract
