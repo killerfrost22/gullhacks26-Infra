@@ -1,0 +1,9 @@
+{
+  "request": {
+    "model": "gemini-4-argon",
+    "case": "B",
+    "thinking": "low"
+  },
+  "response": null,
+  "error": "timeout (180 s)"
+}

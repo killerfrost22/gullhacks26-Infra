@@ -33,7 +33,7 @@ export function Investigating({ onCancel }: { onCancel: () => void }) {
         <span className="working-bar" />
       </div>
       <p className="investigating-time" aria-hidden="true">
-        <span className="investigating-seconds">{seconds}s</span> · usually 10–20 seconds
+        <span className="investigating-seconds">{seconds}s</span> · usually 15–30 seconds
       </p>
       <h3 className="block-title">What happens now</h3>
       <ol className="steps-now" role="list">

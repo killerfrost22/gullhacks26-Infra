@@ -1,0 +1,50 @@
+{
+  "request": {
+    "model": "gemini-3.1-flash-lite",
+    "case": "A",
+    "thinking": "low"
+  },
+  "response": {
+    "status": "completed",
+    "usage": {
+      "total_tokens": 2494,
+      "total_input_tokens": 2041,
+      "input_tokens_by_modality": [
+        {
+          "modality": "image",
+          "tokens": 1080
+        },
+        {
+          "modality": "text",
+          "tokens": 961
+        }
+      ],
+      "total_cached_tokens": 0,
+      "total_output_tokens": 340,
+      "total_tool_use_tokens": 0,
+      "total_thought_tokens": 113,
+      "initial_input_tokens": 2073
+    },
+    "created": "2026-11-07T21:52:59Z",
+    "updated": "2026-11-07T21:52:59Z",
+    "service_tier": "standard",
+    "steps": [
+      {
+        "signature": "EsUECsIEAWkUfRM/KSVBd/TjBMhmfhKM5cWWvMP4yIQZAYV/MY7n35UO/CeNAC+G8h6FP+OYvSlK4evSOl3e8vK8uM/4UjLxeoWBn2DhAb7wRpmUfKJ6O+nEbQIaky7x9gh9TWPrhfSES+u22ReydBH6fJIFh2PruZ5S105S5JOfTCJzbFaktZCUA++xS/39LB1cYI3AM+jdGHw8s8s2cqaNyC0K0ke2U93pZq7Tdjo9+xHxvzXZVtQ4WJvXDj0xiW69KtiSaWzgXTP66Kr4L2rdA8WznDhdFn5TDIE4IP9KAtNa4QbduH0u4pouAMfFGB3C/uEjuwWoDNjrrhJKufOlMFtkmbtq6f99dqJMR9M0JWPvG+2QgE73JHq1r6tLBFYo5kdcVsDaERhiwn7jj5s3LkebYCwoyVFOlm4yuJlUd9VUvdzBWwd3ho0vQx+CCAO+9PJXSc4kMNEDmzHYJLmsQLNuoGQ17kbC1w8QPeteJ9GZT9IepizCEwvJVDgwf40w9SasCMro7AzXDhG2kXqiXxPBYbdFzBc1gWinNQ57ktAAH0zHEqO1T3qxm/7TsFxVIbutrOuKBRR+xuzbb2DzrMt2oJjcGq4+J4u0+2GPyXMDXolJOnpKMJUXHFvGKIYZzCaOLuNDlP39dY4gXzG5QC/LHvwQoG+t5vQV6Om2Kw4reLmEpmNcdmNcnv02358ApQ6vqxXfsdJR375JvERsmtRlgGKZ8ZVecfgNVbNcJJnL4VY/CT0At89P1Cg6tGcyiei0X9I=",
+        "type": "thought"
+      },
+      {
+        "content": [
+          {
+            "text": "ISSUE_KIND: pothole\nISSUE: Pothole in the road surface\nDETAILS: The photo shows a significant, water-filled pothole in an asphalt road. There is no user note provided.\nORGANIZATION: Maryland Department of Transportation (MDOT) State Highway Administration\nDEPARTMENT: Office of Maintenance\nWHY: The road at the provided coordinates is Baltimore Avenue, which is designated as US 1. US 1 is a state highway, and the Maryland State Highway Administration is responsible for the maintenance of state-numbered routes in Maryland, even within municipal limits.\nCOVERAGE_QUOTE: \"The State Highway Administration (SHA) maintains all State-numbered routes in Maryland.\"\nCOVERAGE_URL: https://roads.maryland.gov/mdotsha/pages/index.aspx?PageId=823\nREPORTING_URL: https://roads.maryland.gov/mdotsha/pages/Index.aspx?PageId=25\nOFFICIAL_WEBSITE: https://roads.maryland.gov/\nEMAIL: unknown\nPHONE: 410-545-0300 | https://roads.maryland.gov/mdotsha/pages/index.aspx?PageId=823\nPHOTO_LOOKS_DAYTIME: yes\nNOTE_SAYS_LIGHT_OUT: unknown\nSOURCES:\nhttps://roads.maryland.gov/mdotsha/pages/index.aspx?PageId=823\nhttps://roads.maryland.gov/mdotsha/pages/Index.aspx?PageId=25",
+            "type": "text"
+          }
+        ],
+        "type": "model_output"
+      }
+    ],
+    "object": "interaction",
+    "model": "gemini-3.1-flash-lite"
+  },
+  "error": null
+}

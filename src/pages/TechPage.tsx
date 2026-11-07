@@ -66,7 +66,7 @@ const LAYERS: { title: string; summary: string; items: [string, string][] }[] = 
     title: 'AI',
     summary: 'Google Gemini through the Interactions API, called with plain fetch and no SDK.',
     items: [
-      ['Gemini 3.5 Flash-Lite', 'The default model; reads the photo and writes the report'],
+      ['Gemini 3.6 Flash', 'The default model; reads the photo and writes the report'],
       ['Google Search grounding', 'Finds official pages for the exact spot'],
       ['URL context', 'Reads those pages during the research call'],
       ['Structured output', 'A second call with no tools returns JSON that matches a Zod schema'],

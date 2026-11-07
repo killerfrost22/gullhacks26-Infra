@@ -9,7 +9,8 @@ import { isSearchRedirect } from './provenance.js';
 export const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/interactions';
 /** Pins the response shape the parser below was written against. */
 export const GEMINI_API_REVISION = '2026-05-20';
-export const DEFAULT_GEMINI_MODEL = 'gemini-3.5-flash-lite';
+/** Chosen by the model benchmark in docs/gemini-model-benchmark.md. */
+export const DEFAULT_GEMINI_MODEL = 'gemini-3.6-flash';
 
 export const researchUnavailable = () => new ApiError(503, 'Report lookup is offline right now.', 'RESEARCH_UNAVAILABLE');
 export const researchQuota = () =>

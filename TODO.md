@@ -11,7 +11,7 @@ The original plan (a public report database with tracking codes, a browse map, a
 - First-load JS is 93.8 kB gzip (80 kB with Brotli, which the server now sends). Leaflet (45 kB), exifr, and DOMPurify load only when needed. 2 font files on first load.
 - Lighthouse mobile on the production build: Performance 98, Accessibility 100, Best Practices 100, LCP 2.0–2.1 s, CLS ≤ 0.037 on `/`, `/tech`, `/privacy`. Measured just before the last two UI fixes (numbered search results, search-suggestions width); re-run before the demo.
 - axe: no violations on every page and every flow state (dev scene harness), at 375 and 1440 px.
-- Live end-to-end on the production build: photo → search → pin → note → report in 16 s, "Best match" (Maryland SHA), a phone number verified on collegeparkmd.gov, `.eml` downloaded with the photo attached and no EXIF, no console errors.
+- Live end-to-end on the production build, `gemini-3.6-flash` (the default since `7d92769`): photo → search → pin → note → report in 22 s, "Best match" (University of Maryland Facilities Management), report form and phone verified on facilities.umd.edu, no console errors. An earlier run on `gemini-3.5-flash-lite` took 16 s, named Maryland SHA, and downloaded an `.eml` with the photo attached and no EXIF. Same spot, two different offices, both "Best match": another reason to find a demo spot that reaches "Confirmed".
 - **Domain acquired:** `fixplease.work`, registered at Porkbun on 2026-11-07 (renews 2027-11-07), using Porkbun nameservers. It still shows Porkbun's parked page over HTTP, with no HTTPS.
 - Not deployed. No CI (no `.github/`). No deploy CLIs on the dev laptop (`flyctl`, `railway`, `docker`, `cloudflared`).
 
