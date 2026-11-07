@@ -24,7 +24,7 @@ const SPOT_ZOOM = 18;
 
 const pinIcon = L.divIcon({
   className: 'pin-icon',
-  html: `<span class="pin-mark"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="${RING_PATH}" fill="none" stroke-width="4.6" stroke-linecap="round"/><circle cx="24" cy="24" r="4.5"/></svg></span>`,
+  html: `<span class="pin-mark"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="${RING_PATH}"/><circle cx="24" cy="24" r="4.5"/></svg></span>`,
   iconSize: [56, 56],
   iconAnchor: [28, 28],
 });

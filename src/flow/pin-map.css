@@ -89,7 +89,7 @@
 }
 
 .pin-mark path {
-  stroke: var(--paint);
+  fill: var(--paint);
 }
 
 .pin-mark circle {

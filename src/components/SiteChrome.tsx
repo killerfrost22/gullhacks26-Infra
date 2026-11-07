@@ -1,6 +1,6 @@
 import { Siren } from 'lucide-react';
 import { Link } from '../router';
-import { LogoMark } from './Mark';
+import { Wordmark } from './Mark';
 
 export const REPO_URL = 'https://github.com/killerfrost22/gullhacks26-Infra';
 
@@ -9,8 +9,7 @@ export function SiteHeader() {
     <header className="site-header on-dark">
       <div className="site-header-inner">
         <Link to="/" className="brand" aria-label="Fix Please, report a problem">
-          <LogoMark size={30} className="brand-mark" />
-          <span className="brand-word">Fix Please</span>
+          <Wordmark className="brand-word" />
         </Link>
         <nav aria-label="Main" className="site-nav">
           <Link to="/" className="nav-link nav-link--report">
@@ -42,10 +41,8 @@ export function SiteFooter() {
         </div>
         <div className="footer-grid">
           <p className="footer-brand">
-            <LogoMark size={22} />
-            <span>
-              Fix Please · <span className="nowrap">fixplease.work</span>
-            </span>
+            <Wordmark className="footer-word" />{' '}
+            <span className="nowrap">fixplease.work</span>
           </p>
           <ul role="list" className="footer-links">
             <li>

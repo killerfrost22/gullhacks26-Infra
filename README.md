@@ -129,7 +129,7 @@ src/                       React app
   flow/                    The report: PhotoStep, PinStep, PinMap (Leaflet, loaded on demand), NoteStep,
                            Investigating, ResultView, EmailComposer, ContextChips, SearchSuggestions; state.ts
   pages/                   TechPage (/tech), PrivacyPage (/privacy)
-  components/              Mark (logo and paint ring), SiteChrome (header and footer)
+  components/              Mark (wordmark with FIX circled, map-pin ring, headline paint ring), SiteChrome (header and footer)
   lib/                     API client, captcha worker, photo prep, email and .eml builder, place labels (+ tests)
   styles/                  tokens.css (colors, type, spacing), then base, layout, flow, result, pages
   dev/                     Scene harness for design review: ?scene=<name> in dev only, absent from builds
