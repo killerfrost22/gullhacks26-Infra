@@ -199,6 +199,7 @@ src/                       React app
   styles.css               All styling
 shared/types.ts            Types shared by the server and the app
 public/                    Favicon, app icons, web app manifest
+docs/                      Model benchmark and other write-ups
 submission/                Devpost write-up and video script
 TODO.md                    Feature roadmap
 ```
@@ -245,7 +246,7 @@ Any host that runs one long-lived Node process works (Render, Railway, Fly.io, a
 | Variable | What it does |
 |---|---|
 | `GEMINI_API_KEY` | Required. Server-side only. Search grounding needs a billed Google AI project. |
-| `GEMINI_MODEL` | Defaults to `gemini-3.5-flash-lite`. |
+| `GEMINI_MODEL` | Defaults to `gemini-3.6-flash`. See the [model benchmark](docs/gemini-model-benchmark.md) for why, and how other models compare. |
 | `PORT`, `HOST` | Where the server listens (defaults `8787`, `127.0.0.1`). Use `HOST=0.0.0.0` on most hosts. |
 | `TRUST_PROXY` | Set to the number of proxies in front of the app (usually `1`) so rate limits see real visitor IPs instead of the proxy's. |
 | `RESEARCH_RATE_LIMIT` | Reports per visitor IP per 15 minutes (default 5). Raise it for a demo on shared Wi-Fi. |

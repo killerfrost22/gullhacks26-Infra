@@ -94,7 +94,7 @@ export async function investigate(
   if (separator < 0) throw new ApiError(400, 'The prepared photo is not a valid image data URL.', 'INVALID_PHOTO');
   const prefetch = new AbortController();
   try {
-    const model = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
+    const model = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
     const startedAt = performance.now();
     // Server-side lookup only: client-supplied map facts are never trusted.
     const context = await contextWithin(lookupContext, input);

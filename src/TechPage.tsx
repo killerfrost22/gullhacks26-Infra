@@ -56,7 +56,7 @@ const layers: { icon: Icon; title: string; summary: string; items: [name: string
     title: 'AI',
     summary: 'Google Gemini through the Interactions API, called directly with no SDK.',
     items: [
-      ['Gemini 3.5 Flash-Lite', 'Reads the photo and writes the report'],
+      ['Gemini 3.6 Flash', 'Reads the photo and writes the report'],
       ['Google Search grounding', 'Finds official pages for the exact spot'],
       ['URL context', 'Reads those pages directly'],
       ['Structured output', 'A second pass with no tools returns JSON matching a Zod schema'],

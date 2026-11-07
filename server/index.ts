@@ -56,7 +56,7 @@ export function createApp({
     next();
   });
   app.get('/api/health', (_request, response) => {
-    response.json({ researchConfigured: Boolean(process.env.GEMINI_API_KEY?.trim()), model: process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite' });
+    response.json({ researchConfigured: Boolean(process.env.GEMINI_API_KEY?.trim()), model: process.env.GEMINI_MODEL || 'gemini-3.6-flash' });
   });
   const challengeLimit = rateLimit({
     windowMs: 60_000, limit: 20, standardHeaders: 'draft-8', legacyHeaders: false,
