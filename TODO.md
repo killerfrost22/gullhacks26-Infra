@@ -168,7 +168,7 @@ The original plan (a public report database with tracking codes, a browse map, a
 
 ### Privacy, accessibility, mobile
 - [x] Privacy & Transparency dialog: what is sent to Gemini (including the 30-day retention), nothing stored, OSM requests, bot check, user sends the email.
-- [x] "Tech stack" header tab: a dialog explaining the browser, server, AI, map-data, and source-check layers, with the report flow and a link to the GitHub repo.
+- [x] Tech stack page at `/tech` (header tab): pipeline, frontend/backend/AI/map-data layers, trust checks, and a link to the GitHub repo. Shares the site header and footer.
 - [x] Header fits phones: the nav drops to a second row when there's no room, so nothing scrolls sideways (checked at 320 and 390 px).
 - [x] Skip link, labelled fields, `role="alert"` / `aria-live` status regions, `:focus-visible` rings, `prefers-reduced-motion`, and focus moves to the result heading.
 - [x] Mobile-first CSS with coarse/fine pointer variants and safe-area insets.

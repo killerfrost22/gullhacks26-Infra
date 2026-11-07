@@ -47,22 +47,42 @@ flowchart LR
 
 ## Run it locally
 
-Requires Node.js 24 and a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey). Search grounding needs a billed Google AI project.
+You need:
 
-```powershell
-git clone git@github.com:killerfrost22/gullhacks26-Infra.git
-cd gullhacks26-Infra
-npm install
-Copy-Item .env.example .env   # macOS/Linux: cp .env.example .env
-# open .env and set GEMINI_API_KEY
-npm run dev
-```
+- [Node.js 24](https://nodejs.org) (check with `node --version`) and Git.
+- A Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey). Search grounding needs a billed Google AI project. Without a key the site still runs; see step 5.
 
-Open <http://127.0.0.1:5173>. Use `127.0.0.1`, not `localhost`: Vite only listens on `127.0.0.1`, and if another project is running on `localhost:5173` you'd get that one instead.
+1. **Get the code and install packages.**
 
-The API runs on `PORT` from `.env` (default 8787) and Vite proxies `/api` to whatever port that is. If something else already uses it, the server says so and doesn't start; change `PORT` in `.env` and restart. Restart `npm run dev` after any `.env` change.
+   ```powershell
+   git clone https://github.com/killerfrost22/gullhacks26-Infra.git   # or git@github.com:killerfrost22/gullhacks26-Infra.git if you use SSH
+   cd gullhacks26-Infra
+   npm install
+   ```
 
-Without a key, photo, map, and address search still work; generating a report shows "Report lookup is offline right now." until the key is set.
+2. **Add your key.**
+
+   ```powershell
+   Copy-Item .env.example .env   # macOS/Linux: cp .env.example .env
+   ```
+
+   Open `.env` and paste the key after `GEMINI_API_KEY=`. Leave the other lines as they are.
+
+3. **Start it.**
+
+   ```powershell
+   npm run dev
+   ```
+
+   This starts the API and the web app together. It's ready when the terminal shows `[api] fixplease.work ready at http://127.0.0.1:8787`.
+
+4. **Open <http://127.0.0.1:5173>.** Use `127.0.0.1`, not `localhost`: Vite only listens on `127.0.0.1`, and if another project is running on `localhost:5173` you'd get that one instead. Code changes reload on their own.
+
+5. **Check the key.** <http://127.0.0.1:5173/api/health> should show `"researchConfigured":true`. If it shows `false`, photo, map, and address search still work, but generating a report shows "Report lookup is offline right now." until the key is set.
+
+6. **Stop it** with `Ctrl+C`. Restart `npm run dev` after any `.env` change.
+
+The API runs on `PORT` from `.env` (default 8787) and Vite proxies `/api` to whatever port that is. If something else already uses it, the server says so and doesn't start; change `PORT` in `.env` and restart.
 
 > **Windows + WSL:** run npm where Node is installed. If Node is only installed on Windows, use PowerShell or Git Bash, not a WSL shell. Git over SSH from WSL works fine either way.
 
@@ -97,8 +117,9 @@ server/                    Express API (run with tsx)
   validation.ts, errors.ts Request parsing and the { error, code } error type
   *.test.ts                Server tests
 src/                       React app
-  App.tsx                  The step-by-step flow and loading states
-  components/              PhotoInput, LocationPicker, DetailsPrompt, ContextChips, ResultView, SearchSuggestions, TechStackDialog, Logo
+  App.tsx                  The step-by-step report flow and loading states (/)
+  TechPage.tsx             The tech stack page (/tech)
+  components/              PhotoInput, LocationPicker, DetailsPrompt, ContextChips, ResultView, SearchSuggestions, SiteChrome (shared header/footer), Logo
   lib/                     API client, email draft and .eml builder, place labels, bot-check hook (+ tests)
   styles.css               All styling
 shared/types.ts            Types shared by the server and the app

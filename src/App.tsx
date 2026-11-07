@@ -6,8 +6,7 @@ import { LocationPicker } from './components/LocationPicker';
 import { DetailsPrompt } from './components/DetailsPrompt';
 import { ContextChips } from './components/ContextChips';
 import { ResultView } from './components/ResultView';
-import { LogoMark } from './components/Logo';
-import { TechStackDialog } from './components/TechStackDialog';
+import { SiteFooter, SiteHeader } from './components/SiteChrome';
 import { RequestError, requestJson } from './lib/api';
 import { fetchLocationContext } from './lib/context';
 import { createEmailDraft, type EmailDraft } from './lib/email';
@@ -105,7 +104,6 @@ export function App() {
   const [report, setReport] = useState<Investigation | null>(null);
   const [draft, setDraft] = useState<EmailDraft | null>(null);
   const privacyDialog = useRef<HTMLDialogElement>(null);
-  const techDialog = useRef<HTMLDialogElement>(null);
   const requestController = useRef<AbortController | null>(null);
   const locationStep = useRef<HTMLElement>(null);
   const detailsStep = useRef<HTMLElement>(null);
@@ -201,25 +199,14 @@ export function App() {
   return (
     <>
       <a className="skip-link" href="#main">Skip to content</a>
-      <header className="site-header">
-        <div className="container header-inner">
-          <a className="brand" href="/" aria-label="fixplease.work, start over" onClick={(event) => { event.preventDefault(); startOver(); }}>
-            <LogoMark size={36} />
-            <div className="brand-text">
-              <span className="wordmark">fixplease<span>.work</span></span>
-              <span className="brand-badge">CIVIC AI</span>
-            </div>
-          </a>
-          <nav className="header-nav" aria-label="Site">
-            <div className="nav-status-pill fine-only">
-              <span className="status-dot-active" />
-              <span>AI Grounding Active</span>
-            </div>
-            <button type="button" className="btn-link" onClick={() => techDialog.current?.showModal()}>Tech stack</button>
-            <button type="button" className="btn-link" onClick={() => privacyDialog.current?.showModal()}>Privacy & Transparency</button>
-          </nav>
+      <SiteHeader onBrandClick={(event) => { event.preventDefault(); startOver(); }}>
+        <div className="nav-status-pill fine-only">
+          <span className="status-dot-active" />
+          <span>AI Grounding Active</span>
         </div>
-      </header>
+        <a className="btn-link" href="/tech">Tech stack</a>
+        <button type="button" className="btn-link" onClick={() => privacyDialog.current?.showModal()}>Privacy & Transparency</button>
+      </SiteHeader>
 
       {offline && <p className="offline-banner" role="status">Report lookup is offline right now: the server has no Gemini API key.</p>}
 
@@ -305,13 +292,9 @@ export function App() {
         )}
       </main>
 
-      <footer className="site-footer">
-        <div className="container footer-inner">
-          <p>fixplease.work · Map data © OpenStreetMap contributors</p>
-        </div>
-      </footer>
+      <SiteFooter />
 
-      <dialog ref={privacyDialog} className="site-dialog" aria-labelledby="privacy-title" onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close(); }}>
+      <dialog ref={privacyDialog} className="privacy-dialog" aria-labelledby="privacy-title" onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close(); }}>
         <div className="dialog-body">
           <div className="dialog-head">
             <h2 id="privacy-title">How we handle your report</h2>
@@ -334,8 +317,6 @@ export function App() {
           <button type="button" className="btn btn-primary btn-block" onClick={() => privacyDialog.current?.close()}>Got it</button>
         </div>
       </dialog>
-
-      <TechStackDialog ref={techDialog} onClose={() => techDialog.current?.close()} />
     </>
   );
 }
