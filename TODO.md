@@ -4,12 +4,14 @@ Phone-first web app: snap a photo of broken infrastructure, pin the spot, and ge
 
 The original plan (a public report database with tracking codes, a browse map, and statuses) was replaced by the current no-database design. Items from that plan that conflict with it are listed under [Dropped](#dropped-from-the-original-plan).
 
-**Status (2026-11-07, `7292d00`)**
+**Status (2026-11-07, `474b0ba`)**
 - 57/57 tests pass (`node --import tsx --test server/*.test.ts src/lib/*.test.ts`)
 - `tsc --noEmit` passes
 - `vite build` succeeds, with a warning that the single JS chunk is 649 kB (206 kB gzip)
-- Not deployed: `fixplease.work` has DNS records but nothing answers over HTTPS yet
+- **Domain acquired:** `fixplease.work`, registered at Porkbun on 2026-11-07 (renews 2027-11-07), using Porkbun nameservers. It currently shows Porkbun's "Coming Soon" parked page over HTTP (apex and `www` resolve to 207.207.210.107 / .229), with no HTTPS.
+- Not deployed yet. The app's name, header, OG tags, README, and `submission/` already use `fixplease.work`.
 - No CI: the repo has no `.github/`
+- No deploy CLIs on the dev laptop (`flyctl`, `railway`, `docker`, `cloudflared` not installed)
 
 **Priority legend**
 - **P0**: required for judging and the demo
@@ -20,22 +22,39 @@ The original plan (a public report database with tracking codes, a browse map, a
 
 ## Open — P0
 
-- [ ] **Deploy over HTTPS.** Run one long-lived Node instance (Render / Railway / Fly.io / VM) with `npm ci && npm run build`, then `npm start`. Set these variables:
-  - `GEMINI_API_KEY`: search grounding needs a billed project
-  - `HOST=0.0.0.0`
-  - `TRUST_PROXY=1`
-  - `GEOCODER_USER_AGENT`: include a real contact, as the OSM usage policy requires
+### Launch on fixplease.work (in order)
 
-  Fallback: a `cloudflared` tunnel (README, "Try it on your phone"). Camera, geolocation, and the bot check all need HTTPS.
-- [ ] **Domain.** `fixplease.work` is used in the header, `index.html` OG tags, README, and `submission/`, but nothing is served there yet. Point it at the deploy, or stop presenting it as a live URL until it is.
+- [ ] **Pick the host.** It needs one long-lived Node 24 process. The bot check and rate limits live in memory, so run exactly one instance. Avoid free tiers that sleep when idle: the first visitor after a nap waits through a cold start. Options: Render (Starter), Railway, Fly.io, or a small VM with Caddy for automatic TLS. Whoever owns the account adds the team.
+- [ ] **Production Gemini key.** Create a dedicated key in a billed project with Search grounding enabled (search grounding is a paid-tier feature). Set a budget alert or spending cap: anyone who loads the public site can spend from it, within the rate limits.
+- [ ] **Deploy.** Build with `npm ci && npm run build`, start with `npm start`. Environment:
+  - `GEMINI_API_KEY`: the production key, set in the host's secret settings only
+  - `HOST=0.0.0.0`, and `PORT` from the host if it assigns one
+  - `TRUST_PROXY=1`, or the real number of proxy hops, so rate limits see visitor IPs
+  - `GEOCODER_USER_AGENT=FixPlease/1.0 (+https://fixplease.work; <contact email>)`: the OSM usage policy requires a real contact
+  - `RESEARCH_RATE_LIMIT`: raise it for demo day (see below)
+  - `CAPTCHA_SECRET`: optional; a long random value
+- [ ] **DNS at Porkbun.** Delete the parked-page records for the apex and `www`, then add the records the host gives you: usually ALIAS/A for `fixplease.work` and CNAME for `www`. Make the apex canonical and redirect `www` to it.
+- [ ] **HTTPS.** Let the host issue certificates for `fixplease.work` and `www.fixplease.work` and force HTTP→HTTPS. Camera capture, "I'm standing here", and the bot check all need HTTPS. Add HSTS only after HTTPS has worked for a while.
+- [ ] **Keep the Host header intact.** `/api/investigate` rejects any request whose `Origin` host doesn't match the `Host` header (`server/index.ts` L112–119). A proxy or CDN that rewrites `Host` breaks report generation while everything else still looks fine.
+- [ ] **Smoke test on the live domain**:
+  - `https://fixplease.work/api/health` shows `researchConfigured: true`
+  - Address search and pin context load
+  - One full report end to end
+  - `http://` and `www` redirect to `https://fixplease.work`
+  - No console errors
+- [ ] **Point docs at the live URL.** In the README, "Try it on your phone" becomes "open https://fixplease.work", and the tunnel becomes a local-only fallback. Add host-specific steps to Deploy. Add the live link to `submission/submission.md`.
 - [ ] **Demo rate limit.** Set `RESEARCH_RATE_LIMIT` well above the default of 5 per 15 min per IP. Everyone on venue Wi-Fi shares one IP.
+
+### App and demo
+
+- [ ] **Header overflows on phones.** At a 390 px viewport the header is about 489 px wide (wordmark, CIVIC AI badge, grounding pill, Privacy link), so the page scrolls sideways. This is phone-first, and judges will open it on phones. Fit it at 360–390 px, e.g. hide the badge, shorten the pill, or move Privacy to the footer.
 - [ ] **ResultView fallback organization makes up names** (`src/components/ResultView.tsx` L32–44). When the model returns no organization, the UI builds `City of <address.city> Public Works`, `<county> Department of Public Works`, or `Local Public Works & Roads Department`, and adds a reason sentence saying it is "the best point of contact". Problems:
   - It reads `location.address.city` (Nominatim town/village/city) instead of `context.place.municipality`. An unincorporated place can therefore become a "City of X" that doesn't exist. The research prompt already uses `municipality === null` to mean "county".
   - The `address.county` cast is dead code: `LocationAddress` and `server/geocoder.ts` never set `county`.
   - It contradicts README "Why you can trust the result" and the submission's claim that a plausible answer is never presented as ownership.
 
   Fix: show the municipality/county facts from `context` without invented department names, or say plainly that the office couldn't be identified.
-- [ ] **Real-device pass on iPhone Safari and Android Chrome**, over the HTTPS deploy:
+- [ ] **Real-device pass on iPhone Safari and Android Chrome**, on https://fixplease.work:
   - Take a photo (rear camera) and From your library
   - Confirm iPhone photos arrive as JPEG; `PhotoInput` rejects HEIC
   - "I'm standing here" permission prompt and the denied path
@@ -56,6 +75,8 @@ The original plan (a public report database with tracking codes, a browse map, a
 
 ## Open — P1
 
+- [ ] **Domain email.** Set up Porkbun email forwarding for something like `hello@fixplease.work`. Use it in `GEOCODER_USER_AGENT` and as the contact on the site and in the submission.
+- [ ] **Share previews and canonical URL** (`index.html`): add `<link rel="canonical" href="https://fixplease.work/">`, `og:url`, and an `og:image` so links posted in chats and Devpost show a card.
 - [ ] **UI copy overclaims compared with the app's actual behavior** (`src/App.tsx`):
   - The "AI Grounding Active" pill (L212–215) shows even when `/api/health` reports no key and the offline banner is up.
   - "**Dispatch** our AI-drafted report to the right team" (L247) implies the app sends; it never does.
@@ -71,6 +92,7 @@ The original plan (a public report database with tracking codes, a browse map, a
 
 ## Open — P2
 
+- [ ] For sustained public traffic, move off the public OSM tile server, Nominatim, and Overpass (usage policies), or self-host them. `NOMINATIM_BASE_URL` and `OVERPASS_URL` already make that a config change; tiles are hard-coded in `LocationPicker`.
 - [ ] HEIC on desktop: convert it (e.g. `heic2any`) instead of rejecting it.
 - [ ] More than one photo per report (currently exactly one).
 - [ ] Service worker for the app shell (the manifest and icons already exist).
@@ -176,7 +198,7 @@ These conflict with the no-accounts / no-database design or were superseded by w
 ## Definition of Done (demo)
 
 - [x] A user can photograph an issue, set the location (photo GPS, device, search, or pin), add a note, and get the responsible office plus an editable email with the photo attached.
-- [ ] Deployed at a public HTTPS URL.
+- [ ] Live at https://fixplease.work over HTTPS (with `www` and `http://` redirecting).
 - [ ] Verified on iOS Safari and Android Chrome.
 - [ ] Fallback organization no longer makes up office names.
 - [ ] Flow is usable keyboard-only.
