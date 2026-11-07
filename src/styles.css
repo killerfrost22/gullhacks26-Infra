@@ -773,6 +773,13 @@ input[type='search']::-webkit-search-cancel-button { cursor: pointer; }
   .tech-trust { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tech-cta { padding: 44px 48px; }
 }
+@media (min-width: 600px) and (max-width: 1079px) {
+  /* Five steps in two columns: let the last one span the row instead of sitting alone. */
+  .tech-step:last-child { grid-column: 1 / -1; }
+}
+@media (pointer: coarse) {
+  .header-nav .btn-link { min-height: 44px; }
+}
 @media (min-width: 760px) {
   .tech-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
