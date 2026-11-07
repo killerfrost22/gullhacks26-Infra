@@ -137,7 +137,7 @@ Each case pairs a freely licensed photo with a pin whose maintaining office is c
 
 ### Re-running it
 
-The benchmark script, test photos, and raw API responses were kept outside the repo, on the laptop that ran the test (`Documents/hackathons/gemini-bench/`). To re-run it, send the same request to each model and record the response's `usage` block (`total_input_tokens`, `input_tokens_by_modality`, `total_thought_tokens`, `total_output_tokens`, `total_tool_use_tokens`) and the `google_search_call` steps. The request is the one described in [Method](#method).
+The script, test photos, and every raw API response are in [`benchmarks/gemini-models/`](../benchmarks/gemini-models/). Its README explains how to re-run the benchmark (it costs money) and credits the photos. This run's data is in `benchmarks/gemini-models/results/2026-11-07/`.
 
 ## Appendix: every run
 

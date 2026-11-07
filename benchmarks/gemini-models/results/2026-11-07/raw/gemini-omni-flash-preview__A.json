@@ -1,0 +1,14 @@
+{
+  "request": {
+    "model": "gemini-omni-flash-preview",
+    "case": "A",
+    "thinking": "low"
+  },
+  "response": {
+    "error": {
+      "message": "Search as tool is not enabled for this model",
+      "code": "invalid_request"
+    }
+  },
+  "error": "Search as tool is not enabled for this model"
+}

@@ -199,7 +199,8 @@ src/                       React app
   styles.css               All styling
 shared/types.ts            Types shared by the server and the app
 public/                    Favicon, app icons, web app manifest
-docs/                      Model benchmark and other write-ups
+docs/                      Model benchmark write-up and other docs
+benchmarks/gemini-models/  Model benchmark script, test photos, and raw results
 submission/                Devpost write-up and video script
 TODO.md                    Feature roadmap
 ```
