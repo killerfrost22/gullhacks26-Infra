@@ -1,19 +1,19 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import '@fontsource/barlow/400.css';
-import '@fontsource/barlow/500.css';
-import '@fontsource/barlow/600.css';
-import '@fontsource/barlow/700.css';
-import '@fontsource/barlow-condensed/500.css';
-import '@fontsource/barlow-condensed/700.css';
-import 'leaflet/dist/leaflet.css';
-import './styles.css';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+// Variable fonts: one file per family covers every weight. Browsers fetch only the subsets
+// whose unicode-range the page uses (Latin here), so first load is two font files.
+import '@fontsource-variable/public-sans/wght.css';
+import '@fontsource-variable/big-shoulders/opsz.css';
+import './styles/tokens.css';
+import './styles/base.css';
+import './styles/layout.css';
+import './styles/flow.css';
+import './styles/result.css';
+import './styles/pages.css';
 import { App } from './App';
-import { TechPage } from './TechPage';
 
-// Two pages, both full page loads. The server's SPA fallback returns index.html for /tech.
-const Page = window.location.pathname.replace(/\/+$/, '') === '/tech' ? TechPage : App;
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode><Page /></React.StrictMode>,
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
 );

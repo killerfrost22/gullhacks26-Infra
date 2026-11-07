@@ -1,0 +1,42 @@
+/**
+ * The Fix Please identity is survey paint, the way road crews circle a pothole before they fix it.
+ * The wordmark circles FIX the same way the headline circles "broken". The square mark is one
+ * hand-sprayed loop around a spot: the map pin draws it from RING_PATH, and public/favicon.svg and
+ * public/icons/ use the same path.
+ */
+
+/**
+ * The sprayed loop as a filled outline in a 48×48 box. It starts thin at one o'clock, runs a full
+ * turn, and its fading second pass crosses inside the first. Fill it; don't stroke it.
+ */
+export const RING_PATH =
+  'M34.01 8.89L33.08 8.25L32.09 7.68L30.34 6.86L29.24 6.47L28.09 6.16L26.13 5.82L24.12 5.72L22.91 5.77L21.72 5.91L20.54 6.12L19.39 6.4L18.26 6.75L17.16 7.16L16.09 7.63L14.71 8.33L13.71 8.92L12.74 9.57L11.79 10.27L10.88 11.02L10.01 11.83L9.18 12.71L8.4 13.64L7.69 14.64L7.06 15.68L6.68 16.41L6.19 17.53L5.92 18.3L5.69 19.08L5.42 20.26L5.3 21.04L5.2 22.22L5.19 23.38L5.25 24.52L5.39 25.64L5.59 26.72L5.85 27.77L6.28 29.13L6.79 30.45L7.23 31.41L7.89 32.65L8.45 33.56L9.07 34.44L9.75 35.3L10.5 36.11L11.3 36.87L12.16 37.58L13.07 38.23L14.03 38.82L15.02 39.33L16.04 39.78L17.09 40.15L18.15 40.46L19.22 40.71L21.39 41.01L22.84 41.08L23.94 41.07L25.04 40.99L26.14 40.85L27.24 40.65L28.33 40.37L30.11 39.74L31.49 39.09L32.79 38.3L34.29 37.16L35.61 35.88L36.75 34.5L37.71 33.06L38.67 31.3L39.56 29.22L40.15 27.39L40.58 25.47L40.78 23.8L40.78 22.09L40.56 20.35L40.21 18.98L39.97 18.32L39.56 17.35L38.88 16.13L38.08 15L37.2 13.97L36.24 13.04L34.52 12.07L32.76 11.3L31.57 10.9L30.66 10.65L28.83 10.3L27.28 10.17L25.75 10.2L24.24 10.38L22.5 10.77L20.84 11.33L19.28 12.02L17.56 12.95L15.92 14.01A0.61 0.61 0 0 0 16.63 15.02L17.72 14.31L19.11 13.58L20.57 13L21.83 12.63L23.12 12.4L24.42 12.32L25.71 12.39L26.96 12.63L27.93 12.92L29.08 13.42L30.16 14.05L31.16 14.78L32.06 15.61L32.99 16.71L33.94 17.67L34.61 18.55L35.14 19.48L35.54 20.47L35.79 21.51L35.9 22.6L35.85 23.96L35.66 25.13L35.29 26.56L34.78 27.99L34.15 29.39L33.53 30.51L32.81 31.58L32 32.56L31.08 33.46L30.06 34.23L29.17 34.77L28.22 35.22L26.97 35.66L25.38 36.01L23.74 36.17L21.8 36.13L20.17 35.9L18.6 35.49L17.12 34.91L15.77 34.14L14.55 33.21L13.48 32.11L13 31.51L12.4 30.65L11.51 29.01L10.81 27.25L10.33 25.41L10.11 23.8L10.11 22.19L10.2 21.39L10.36 20.6L10.57 19.82L10.86 19.05L11.48 17.82L12.28 16.64L13.45 15.32L14.82 14.12L16.33 13.05L18.22 11.94L19.93 11.11L21.69 10.42L23.21 9.97L25.08 9.61L26.68 9.46L28.3 9.46L29.94 9.63L31.59 9.94L33.23 10.41A0.86 0.86 0 0 0 34.01 8.89Z';
+
+/** Wide, hand-sprayed ellipse that circles a word. Stretches to its box. */
+export function PaintRing({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 220 90" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <path
+        d="M200 20C176 5 76 2 34 12 9 18 3 44 18 60c26 23 150 26 188 4 18-11 16-36-14-48C166 6 130 5 100 7"
+        fill="none"
+        stroke="var(--paint)"
+        strokeWidth="5"
+        strokeLinecap="round"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  );
+}
+
+/** "Fix Please" with FIX circled in survey paint. Reads as plain text; size it with `font-size`. */
+export function Wordmark({ className }: { className?: string }) {
+  return (
+    <span className={className ? `wordmark ${className}` : 'wordmark'}>
+      <span className="wordmark-fix">
+        Fix
+        <PaintRing className="wordmark-ring" />
+      </span>{' '}
+      Please
+    </span>
+  );
+}

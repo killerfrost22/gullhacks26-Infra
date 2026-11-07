@@ -1,0 +1,173 @@
+.pin-map {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.pin-map-frame {
+  position: relative;
+  border-radius: var(--radius-3);
+  overflow: hidden;
+  border: 1.5px solid var(--ink);
+  background: #dcd6c8;
+  isolation: isolate;
+}
+
+.pin-map-canvas {
+  height: clamp(280px, 52vw, 420px);
+  font: inherit;
+  background: #dcd6c8;
+}
+
+.pin-map-canvas:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+  border-radius: var(--radius-3);
+}
+
+/* Shows where "Pin the map's centre" will land while the map has keyboard focus. */
+.pin-map-crosshair {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  z-index: 500;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur-2) var(--ease-out);
+  background:
+    linear-gradient(var(--ink), var(--ink)) center / 2px 100% no-repeat,
+    linear-gradient(var(--ink), var(--ink)) center / 100% 2px no-repeat;
+}
+
+.pin-map-frame:has(.pin-map-canvas:focus-visible) .pin-map-crosshair {
+  opacity: 0.8;
+}
+
+.pin-map-failed {
+  position: absolute;
+  inset: auto var(--space-3) var(--space-3);
+  z-index: 600;
+  padding: var(--space-3);
+  border-radius: var(--radius-2);
+  background: var(--card);
+  border: 1.5px solid var(--warn);
+  font-size: var(--step--1);
+}
+
+.pin-map-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+
+.pin-map-hint {
+  color: var(--muted);
+  font-size: var(--step--1);
+}
+
+/* ---------------------------------------------------------------- the pin */
+
+.pin-icon {
+  background: none;
+  border: 0;
+}
+
+.pin-mark {
+  display: block;
+  width: 56px;
+  height: 56px;
+  filter: drop-shadow(0 2px 2px rgb(0 0 0 / 35%));
+  cursor: grab;
+}
+
+.pin-mark svg {
+  width: 100%;
+  height: 100%;
+}
+
+.pin-mark path {
+  fill: var(--paint);
+}
+
+.pin-mark circle {
+  fill: var(--ink);
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.leaflet-dragging .pin-mark {
+  cursor: grabbing;
+}
+
+/* ---------------------------------------------------------------- search-result markers */
+
+.cand-icon {
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+}
+
+/* The visible disc is 28 px; the 44 px icon box around it is the tap target. */
+.cand-mark {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+  font: 800 15px/1 var(--font-display);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 40%);
+  cursor: pointer;
+  transition: transform var(--dur-2) var(--ease-stamp);
+}
+
+.cand-icon.is-active .cand-mark {
+  background: var(--paint);
+  color: var(--ink);
+  transform: scale(1.35);
+}
+
+/* ---------------------------------------------------------------- Leaflet controls, restyled */
+
+.pin-map .leaflet-bar {
+  border: 1.5px solid var(--ink);
+  border-radius: var(--radius-2);
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.pin-map .leaflet-bar a {
+  width: var(--tap);
+  height: var(--tap);
+  line-height: var(--tap);
+  font-size: 1.25rem;
+  color: var(--ink);
+  background: var(--card);
+  border-bottom-color: var(--line);
+}
+
+.pin-map .leaflet-bar a:hover {
+  background: var(--paper);
+}
+
+.pin-map .leaflet-bar a:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+}
+
+.pin-map .leaflet-control-attribution {
+  font: 600 11px/1.5 var(--font-body);
+  background: rgb(252 251 247 / 92%);
+  color: var(--ink-2);
+  padding: 2px 6px;
+}
+
+.pin-map .leaflet-control-attribution a {
+  color: var(--ink);
+}

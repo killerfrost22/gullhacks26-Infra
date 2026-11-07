@@ -15,13 +15,13 @@ Read the **Voiceover** passages aloud. **Screen** directions describe what to re
 - Rehearse the photo → pin → note → investigation → sources → email flow with that same issue. Use truthful location details, not invented observations or a staged authority response.
 - Read the returned sources before filming. Keep the actual confidence label visible; do not turn a best match into a verified result in the edit. If no useful source is returned, choose another real issue for the main walkthrough rather than manufacturing evidence.
 - Keep notifications and personal mail out of frame. Leave enough lookup quota for the take; the default investigation limit is five reports per IP address per 15 minutes.
-- Record the full investigation wait. You can shorten it in the edit, but label the cut **“Lookup shortened for video.”** The animated stages are progress copy, not a live trace of individual backend operations.
-- For this desktop walkthrough, show **Download email with photo**. On supported phones, **Send with photo** opens the system share sheet instead; use an actual phone over HTTPS to film that variation.
+- Record the full investigation wait. You can shorten it in the edit, but label the cut **“Lookup shortened for video.”** The waiting screen shows elapsed seconds and a fixed list of what happens; it does not trace individual backend steps.
+- For this desktop walkthrough, show **Download email**. On supported phones, **Send with photo** opens the system share sheet instead; use an actual phone over HTTPS to film that variation.
 - Do not send a duplicate or test report to a public office. End at the draft or downloaded email.
 
 ## Screen 1 — The problem and the promise | 00:00–00:15
 
-**Screen:** Start on the landing page with the Fix Please brand and the headline visible. Briefly point to the photo upload area.
+**Screen:** Start on the home page with the Fix Please brand and the headline (“Find who fixes it.”, with the paint ring) visible. Briefly point to the photo step.
 
 **Voiceover:**
 
@@ -31,7 +31,7 @@ Read the **Voiceover** passages aloud. **Screen** directions describe what to re
 
 ## Screen 2 — Snap the problem | 00:15–00:30
 
-**Screen:** In **Snap the problem**, click **Choose a photo** and upload the real pothole photo. Pause on the prepared preview.
+**Screen:** In **The photo**, click **Choose a photo** and upload the real pothole photo. Pause on the prepared preview.
 
 **Voiceover:**
 
@@ -41,7 +41,7 @@ Read the **Voiceover** passages aloud. **Screen** directions describe what to re
 
 ## Screen 3 — Pin the exact spot | 00:30–00:47
 
-**Screen:** In **Pin the spot**, search for the real address or place. Select the result, adjust the pin to the issue, and click **Yes, it’s here**. Keep any available road or campus context chips in frame.
+**Screen:** In **The exact spot**, search for the real address or place. Select the result, adjust the pin to the issue, and click **Yes, it’s here**. Keep the map-fact chips (road, campus, city or town) in frame.
 
 **Voiceover:**
 
@@ -51,7 +51,7 @@ Read the **Voiceover** passages aloud. **Screen** directions describe what to re
 
 ## Screen 4 — Add the missing context | 00:47–01:02
 
-**Screen:** In **Guide the AI**, add one short, accurate note about the pothole’s position, such as its lane or a nearby landmark. Do not enter an example that is untrue for this photo.
+**Screen:** In **Anything that helps**, add one short, accurate note about the pothole’s position, such as its lane or a nearby landmark. Do not enter an example that is untrue for this photo.
 
 **Voiceover:**
 
@@ -61,7 +61,7 @@ Read the **Voiceover** passages aloud. **Screen** directions describe what to re
 
 ## Screen 5 — Investigate | 01:02–01:19
 
-**Screen:** Click **Investigate & Find Office**. Show the investigation state, then transition into the real result. If shortening the wait, use the disclosure from the recording checklist.
+**Screen:** Click **Find who fixes it**. Show the waiting screen, then transition into the real result. If shortening the wait, use the disclosure from the recording checklist.
 
 **Voiceover:**
 
@@ -71,7 +71,7 @@ Read the **Voiceover** passages aloud. **Screen** directions describe what to re
 
 ## Screen 6 — Show the evidence, not just an answer | 01:19–01:41
 
-**Screen:** Frame the responsible organization, explanation, and actual verdict badge together. Scroll to **How we know** and open a returned source. Return to the app without hiding warnings. If the result has no published email, show that honestly.
+**Screen:** Frame the responsible organization, explanation, and the actual verdict stamp together. Scroll to **How we know** and open a returned source. Return to the app without hiding **Before you send** warnings. If the result has no published email, show that honestly.
 
 **Voiceover:**
 
@@ -81,7 +81,7 @@ Read the **Voiceover** passages aloud. **Screen** directions describe what to re
 
 ## Screen 7 — Review a report you can send | 01:41–02:02
 
-**Screen:** Focus on **Your email**. Show the editable **To**, **Subject**, and **Message** fields and the photo attachment. Make a small, truthful edit to the wording. Click **Download email with photo** and show the download confirmation; stop before sending anything.
+**Screen:** Focus on **Your email**. Show the editable **To**, **Subject**, and **Message** fields and the photo attachment. Make a small, truthful edit to the wording. Click **Download email** and show the download confirmation; stop before sending anything.
 
 **Voiceover:**
 
@@ -91,7 +91,7 @@ Read the **Voiceover** passages aloud. **Screen** directions describe what to re
 
 ## Screen 8 — Privacy and the build | 02:02–02:19
 
-**Screen:** Open **Privacy & Transparency**. Frame **What gets sent**, **What we keep**, and **Sending**. Use a brief stack caption over the recording, without covering the privacy text.
+**Screen:** Open **Privacy** in the header. Frame **Four places, and why** and **What never leaves your phone**. Use a brief stack caption over the recording, without covering the privacy text.
 
 **Voiceover:**
 
@@ -101,7 +101,7 @@ Read the **Voiceover** passages aloud. **Screen** directions describe what to re
 
 ## Screen 9 — Close on the outcome | 02:19–02:30
 
-**Screen:** Close the privacy dialog and return to the result, keeping the responsible office and draft visible. Finish with the brand and `fixplease.work` as an end card.
+**Screen:** Go back to the report (browser Back); the result and draft are still there. Keep the responsible office and draft visible. Finish with the brand and `fixplease.work` as an end card.
 
 **Voiceover:**
 

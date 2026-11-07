@@ -1,149 +1,218 @@
-import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildEmailFile, buildMailto, createEmailDraft } from './email';
-import type { Investigation, PreparedPhoto } from '../../shared/types';
+import { describe, test } from 'node:test';
+import type { Investigation, LocationContext, Place } from '../../shared/types';
+import { buildEmlFile, buildMailto, createEmailDraft } from './email';
 
-const photo: PreparedPhoto = {
-  dataUrl: 'data:image/jpeg;base64,/9j/2Q==',
-  fileName: 'report-photo.jpg', width: 1, height: 1, gps: null,
-};
-
-const report: Investigation = {
-  id: 'routing-unresolved', createdAt: '2026-10-20T12:00:00Z',
-  timings: { contextMs: 0, researchMs: 1800, formattingMs: 600, verificationMs: 100, totalMs: 2500 },
-  issue: { type: 'pothole', title: 'Road damage', summary: 'A depression in the road.', observations: ['Uneven road surface'] },
-  location: { latitude: 0, longitude: 0, label: 'User-confirmed coordinates', address: null },
-  context: null,
-  responsibility: {
-    status: 'unresolved', organization: null, department: null, email: null,
-    emailSourceUrl: null, phone: null, reportingUrl: null, reason: 'No asset owner confirmed.',
-  },
-  sources: [], warnings: ['Ownership requires confirmation.'],
-  searchSuggestionsHtml: [],
-};
-
-test('email MIME preserves Unicode text and exact photo bytes without unsafe headers', () => {
-  const draft = { to: 'maintenance@example.edu', subject: 'Éclairage près de l’université 大学 💡\r\nBcc: attacker@example.com', body: 'Une lumière est éteinte.\n位置：大学。\nThanks 💡' };
-  const file = buildEmailFile(draft, photo, new Date('2026-10-20T12:00:00Z'));
-  const headers = file.split('\r\n\r\n')[0];
-  assert.equal(/^Bcc:/m.test(headers), false);
-  const subject = headers.match(/^Subject: ([\s\S]*?)(?=\r\nMIME-Version:)/m)?.[1];
-  assert.ok(subject);
-  const decodedSubject = [...subject.matchAll(/=\?UTF-8\?B\?([^?]*)\?=/g)].map((match) => Buffer.from(match[1], 'base64').toString('utf8')).join('');
-  assert.equal(decodedSubject, draft.subject.replace(/[\r\n]+/g, ' '));
-  for (const word of subject.split(/\r\n /)) assert.ok(word.length <= 75);
-  const textPart = file.match(/Content-Type: text\/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n([\s\S]*?)\r\n--/)?.[1];
-  assert.ok(textPart);
-  assert.equal(Buffer.from(textPart, 'base64').toString('utf8'), draft.body.replace(/\n/g, '\r\n'));
-  const imagePart = file.match(/Content-Disposition: attachment; filename="report-photo.jpg"\r\n\r\n([\s\S]*?)\r\n--/)?.[1];
-  assert.ok(imagePart);
-  assert.deepEqual(Buffer.from(imagePart, 'base64'), Buffer.from('/9j/2Q==', 'base64'));
-});
-
-test('a contact without a supporting source is never preaddressed', () => {
-  const ungrounded = { ...report, responsibility: { ...report.responsibility, email: 'guessed@example.edu' } };
-  const draft = createEmailDraft(ungrounded, '');
-  assert.equal(draft.to, '');
-  assert.equal(/^To:/m.test(buildEmailFile(draft, photo)), false);
-});
-
-test('recipient header injection is rejected in both draft export paths', () => {
-  const draft = { to: 'office@example.edu\r\nBcc: attacker@example.com', subject: 'Road report', body: 'Please inspect.' };
-  assert.throws(() => buildEmailFile(draft, photo), /recipient email/);
-  assert.throws(() => buildMailto(draft), /recipient email/);
-});
-
-test('subjects contain only the issue, street, and city rather than the geocoder hierarchy', () => {
-  const location = {
-    ...report.location,
-    label: 'Engineering Building, 15, College Avenue, Downtown, Davis, Yolo County, California, 95616, United States',
-    address: { street: 'College Avenue', city: 'Davis', houseNumber: '15' },
-  };
-  const cases: { type: Investigation['issue']['type']; title: string; subject: string }[] = [
-    { type: 'pothole', title: 'Road surface disintegration exposing loose base aggregate', subject: 'Pothole' },
-    { type: 'light_outage', title: 'Reported streetlight malfunction on campus', subject: 'Light outage' },
-    { type: 'other', title: 'Open utility box', subject: 'Open utility box' },
-  ];
-  for (const item of cases) {
-    const draft = createEmailDraft({ ...report, location, issue: { ...report.issue, type: item.type, title: item.title } }, '');
-    assert.equal(draft.subject, `${item.subject} — College Avenue, Davis`);
-  }
-});
-
-test('the body carries the issue, address, and photo reference, but no raw GPS or research feedback clues', () => {
-  const detailed: Investigation = {
-    ...report,
+function makeReport(overrides: Partial<Investigation['responsibility']> = {}, context: LocationContext | null = null): Investigation {
+  return {
     issue: {
-      type: 'other', title: 'Open utility box',
-      summary: 'An uncovered utility box in the grass has exposed components.',
-      observations: ['Separate investigation observation that should stay on the website.'],
-    },
-    location: {
-      latitude: 38.5449, longitude: -121.7405,
-      label: 'Engineering Building, 15 College Avenue, Downtown, Davis, Yolo County, California, 95616, United States',
-      address: { street: 'College Avenue', city: 'Davis', houseNumber: '15' },
+      kind: 'pothole',
+      title: 'Pothole in the eastbound lane',
+      summary: 'A pothole about 40 cm wide sits in the right wheel path.',
+      observations: [],
     },
     responsibility: {
-      ...report.responsibility,
-      status: 'source_supported', organization: 'Campus Facilities', department: 'Asset Ownership Team',
-      email: 'maintenance@example.edu', emailSourceUrl: 'https://example.edu/facilities/contact',
-      phone: '+1 555 0100', reportingUrl: 'https://example.edu/report',
-      reason: 'Internal routing explanation: inspect the lot boundaries before assigning a repair team.',
+      verdict: 'confirmed',
+      organization: "Prince George's County",
+      department: 'Department of Public Works and Transportation',
+      reason: 'The county maintains this road.',
+      evidence: { url: 'https://www.princegeorgescountymd.gov/roads', quote: 'County roads' },
+      reportingUrl: null,
+      email: { value: 'roads@co.pg.md.us', sourceUrl: 'https://www.princegeorgescountymd.gov/roads' },
+      phone: null,
+      ...overrides,
     },
-    sources: [{ title: 'Official facilities directory', url: 'https://example.edu/directory', note: 'Internal source-verification evidence.' }],
-    warnings: ['The open ground box creates a direct tripping hazard.', 'Exact ownership depends on property lot lines.'],
+    sources: [],
+    warnings: [],
+    searchSuggestionsHtml: null,
+    context,
+    generatedAt: '2026-11-07T20:00:00.000Z',
   };
-  const words = 'I think Greenbelt Station HOA handles this repair.';
-  const draft = createEmailDraft(detailed, `  ${words}\n`);
-  assert.equal(draft.to, 'maintenance@example.edu');
-  assert.ok(draft.body.includes(detailed.issue.summary));
-  assert.ok(draft.body.includes('15 College Avenue, Davis'));
-  assert.equal(draft.body.includes(words), false, 'User research feedback/clues should not be in the email body');
-  assert.equal(draft.body.includes('38.54490'), false, 'GPS coordinates should not be in the email body');
-  assert.match(draft.body, /photo.*attached/i);
-  assert.doesNotMatch(draft.body, /https?:\/\//i);
-  for (const internalValue of [
-    detailed.responsibility.organization!, detailed.responsibility.department!, detailed.responsibility.reason,
-    detailed.sources[0].title, detailed.sources[0].note, detailed.issue.observations[0],
-    ...detailed.warnings, 'Yolo County', '95616',
-  ]) assert.equal(draft.body.includes(internalValue), false, `Unexpected email content: ${internalValue}`);
+}
+
+const campusPlace: Place = {
+  latitude: 38.98972,
+  longitude: -76.93776,
+  label: '4306, Campus Drive, College Park, Maryland, 20742, United States',
+  address: {
+    houseNumber: '4306',
+    road: 'Campus Drive',
+    locality: 'College Park',
+    county: "Prince George's County",
+    state: 'Maryland',
+    postcode: '20742',
+    country: 'United States',
+    countryCode: 'us',
+  },
+};
+
+const coordinatePattern = /\d{1,3}\.\d{3,}/;
+
+describe('createEmailDraft', () => {
+  test('writes the subject from the issue title and short place', () => {
+    const draft = createEmailDraft({ report: makeReport(), place: campusPlace, details: '', photoFileName: 'fixplease-20261107-1532.jpg' });
+    assert.equal(draft.subject, 'Pothole in the eastbound lane near 4306 Campus Drive, College Park');
+    assert.equal(draft.to, 'roads@co.pg.md.us');
+    assert.match(draft.body, /^Hello Department of Public Works and Transportation,\n/);
+    assert.match(draft.body, /Location: 4306 Campus Drive, College Park/);
+    assert.match(draft.body, /fixplease-20261107-1532\.jpg/);
+    assert.match(draft.body, /Thank you,$/);
+  });
+
+  test('never includes coordinates, even when the label is made of them', () => {
+    const place: Place = { latitude: 38.98972, longitude: -76.93776, label: '38.98972, -76.93776', address: null };
+    const draft = createEmailDraft({ report: makeReport(), place, details: 'By the bus stop', photoFileName: 'p.jpg' });
+    assert.doesNotMatch(draft.subject, coordinatePattern);
+    assert.doesNotMatch(draft.body, coordinatePattern);
+    assert.equal(draft.subject, 'Pothole in the eastbound lane');
+    assert.match(draft.body, /By the bus stop/);
+  });
+
+  test('keeps the street from a label that mixes in coordinates', () => {
+    const place: Place = { latitude: 1, longitude: 2, label: 'Baltimore Avenue (38.9897, -76.9378)', address: null };
+    const draft = createEmailDraft({ report: makeReport(), place, details: '', photoFileName: 'p.jpg' });
+    assert.equal(draft.subject, 'Pothole in the eastbound lane near Baltimore Avenue');
+    assert.doesNotMatch(draft.body, coordinatePattern);
+  });
+
+  test('missing address parts do not become invented names', () => {
+    const place: Place = {
+      latitude: 1,
+      longitude: 2,
+      label: 'Somewhere',
+      address: { houseNumber: '12', road: null, locality: null, county: null, state: 'Maryland', postcode: null, country: null, countryCode: 'us' },
+    };
+    const report = makeReport({ verdict: 'unidentified', organization: null, department: null, evidence: null, email: null });
+    const draft = createEmailDraft({ report, place, details: '', photoFileName: 'p.jpg' });
+    assert.equal(draft.to, '');
+    assert.match(draft.body, /^Hello,\n/);
+    assert.doesNotMatch(draft.body, /City of|Public Works|undefined|null/);
+    // The house number alone isn't an address; Maryland alone isn't a location line.
+    assert.doesNotMatch(draft.body, /\b12\b/);
+    assert.equal(draft.subject, 'Pothole in the eastbound lane near Somewhere');
+  });
+
+  test('To stays empty without a verified email', () => {
+    const draft = createEmailDraft({ report: makeReport({ email: null }), place: campusPlace, details: '', photoFileName: 'p.jpg' });
+    assert.equal(draft.to, '');
+  });
+
+  test('a malformed published address is not used as a recipient', () => {
+    const email = { value: 'roads@city.gov\r\nBcc: x@evil.invalid', sourceUrl: 'https://city.gov' };
+    const draft = createEmailDraft({ report: makeReport({ email }), place: campusPlace, details: '', photoFileName: 'p.jpg' });
+    assert.equal(draft.to, '');
+  });
+
+  test('greets the organization when no department is known', () => {
+    const report = makeReport({ verdict: 'best_match', department: null, organization: 'City of College Park' });
+    const draft = createEmailDraft({ report, place: campusPlace, details: '', photoFileName: 'p.jpg' });
+    assert.match(draft.body, /^Hello City of College Park,\n/);
+  });
+
+  test('leaves out research internals', () => {
+    const draft = createEmailDraft({ report: makeReport(), place: campusPlace, details: 'Near the stop sign', photoFileName: 'p.jpg' });
+    assert.doesNotMatch(`${draft.subject}\n${draft.body}`, /map facts|gemini|confirmed|best match|unidentified|verdict/i);
+  });
+
+  test('falls back to campus from map facts when the address has no road', () => {
+    const context: LocationContext = {
+      road: null,
+      campus: { name: 'University of Maryland', operator: null, website: null },
+      streetLights: [],
+      area: null,
+      partial: false,
+    };
+    const place: Place = { latitude: 1, longitude: 2, label: 'x', address: { ...campusPlace.address!, houseNumber: null, road: null } };
+    const draft = createEmailDraft({ report: makeReport({}, context), place, details: '', photoFileName: 'p.jpg' });
+    assert.equal(draft.subject, 'Pothole in the eastbound lane near University of Maryland, College Park');
+  });
+
+  test('the municipality from map facts appears without a type word', () => {
+    const context: LocationContext = {
+      road: null,
+      campus: null,
+      streetLights: [],
+      area: {
+        municipality: 'University Park',
+        municipalityKind: 'town',
+        incorporation: 'incorporated',
+        county: "Prince George's County",
+        state: 'Maryland',
+        country: 'United States',
+        countryCode: 'us',
+      },
+      partial: false,
+    };
+    const place: Place = { latitude: 1, longitude: 2, label: 'x', address: { ...campusPlace.address!, houseNumber: '7', road: 'Pineway', locality: null } };
+    const report = makeReport({ verdict: 'unidentified', organization: null, department: null, evidence: null, email: null }, context);
+    const draft = createEmailDraft({ report, place, details: '', photoFileName: 'p.jpg' });
+    assert.equal(draft.subject, 'Pothole in the eastbound lane near 7 Pineway, University Park');
+    assert.doesNotMatch(`${draft.subject}\n${draft.body}`, /\b(City|Town|Village|Borough|Township) of\b/);
+  });
 });
 
-test('missing address components do not turn a location label into invented street or city names', () => {
-  const unknown = { ...report, location: { ...report.location, label: 'Confirmed map point near the east entrance', address: null } };
-  const draft = createEmailDraft(unknown, '');
-  assert.equal(draft.subject, 'Pothole');
-  assert.ok(draft.body.includes(unknown.location.label));
+describe('buildMailto', () => {
+  test('percent-encodes subject and body with CRLF line breaks', () => {
+    const url = buildMailto({ to: 'roads@city.gov', subject: 'Pothole & sign near 1st Ave', body: 'Hello,\n\nThanks?' });
+    assert.equal(url, 'mailto:roads@city.gov?subject=Pothole%20%26%20sign%20near%201st%20Ave&body=Hello%2C%0D%0A%0D%0AThanks%3F');
+  });
+
+  test('works with an empty recipient', () => {
+    assert.match(buildMailto({ to: '', subject: 'S', body: 'B' }), /^mailto:\?subject=S&body=B$/);
+  });
 });
 
-test('a known city without a street keeps the specific campus location in the body', () => {
-  const campus = {
-    ...report,
-    issue: { ...report.issue, type: 'other' as const, title: 'Open utility box' },
-    location: {
-      ...report.location,
-      label: 'North Quad, Example College, Davis',
-      address: { street: null, city: 'Davis', houseNumber: null },
-    },
-  };
-  const draft = createEmailDraft(campus, '');
-  assert.equal(draft.subject, 'Open utility box — Davis');
-  assert.ok(draft.body.includes(campus.location.label));
-});
+describe('buildEmlFile', () => {
+  test('builds a MIME draft whose attachment round-trips', async () => {
+    const photoBytes = new Uint8Array(5000).map((_, i) => (i * 37) % 256);
+    const draft = { to: 'roads@city.gov', subject: 'Pothole near Café Street', body: 'Hello,\n\nLine two\nThank you,' };
+    const file = await buildEmlFile(draft, { blob: new Blob([photoBytes], { type: 'image/jpeg' }), fileName: 'fixplease-20261107-1532.jpg' });
 
-test('coordinate strings in location label are never printed in the email draft', () => {
-  const coordReport: Investigation = {
-    ...report,
-    location: {
-      latitude: 39.006123,
-      longitude: -76.901234,
-      label: 'Coordinates: 39.006123, -76.901234',
-      address: null,
-    },
-  };
-  const draft = createEmailDraft(coordReport);
-  assert.equal(draft.body.includes('Coordinates:'), false);
-  assert.equal(draft.body.includes('39.006123'), false);
-  assert.equal(draft.body.includes('-76.901234'), false);
-  assert.equal(draft.body.includes('at Coordinates'), false);
+    assert.equal(file.name, 'fixplease-report.eml');
+    assert.equal(file.type, 'message/rfc822');
+    const text = await file.text();
+    assert.doesNotMatch(text.replace(/\r\n/g, ''), /[\r\n]/, 'every line ends in CRLF');
+
+    const [head, ...rest] = text.split('\r\n\r\n');
+    assert.match(head, /^To: roads@city\.gov$/m);
+    assert.match(head, /^X-Unsent: 1$/m);
+    assert.match(head, /^MIME-Version: 1\.0$/m);
+    const subject = /^Subject: (=\?UTF-8\?B\?([A-Za-z0-9+/=]+)\?=)$/m.exec(head);
+    assert.ok(subject, 'non-ASCII subject is RFC 2047 encoded');
+    assert.equal(Buffer.from(subject[2], 'base64').toString('utf8'), 'Pothole near Café Street');
+    const boundary = /boundary="([^"]+)"/.exec(head)?.[1];
+    assert.ok(boundary);
+    const body = rest.join('\r\n\r\n');
+    assert.ok(body.trimEnd().endsWith(`--${boundary}--`));
+
+    const parts = body.split(`--${boundary}`).slice(1, -1);
+    assert.equal(parts.length, 2);
+    const [textPart, imagePart] = parts.map((part) => {
+      const [partHead, partBody] = part.replace(/^\r\n/, '').split('\r\n\r\n');
+      return { head: partHead, lines: partBody.trim().split('\r\n') };
+    });
+    assert.match(textPart.head, /text\/plain; charset=UTF-8/);
+    assert.equal(Buffer.from(textPart.lines.join(''), 'base64').toString('utf8'), 'Hello,\r\n\r\nLine two\r\nThank you,');
+    assert.match(imagePart.head, /Content-Type: image\/jpeg; name="fixplease-20261107-1532\.jpg"/);
+    assert.match(imagePart.head, /Content-Disposition: attachment; filename="fixplease-20261107-1532\.jpg"/);
+    assert.ok(imagePart.lines.every((line) => line.length <= 76));
+    assert.deepEqual(new Uint8Array(Buffer.from(imagePart.lines.join(''), 'base64')), photoBytes);
+  });
+
+  test('leaves out To when there is no recipient and keeps ASCII subjects plain', async () => {
+    const file = await buildEmlFile({ to: '', subject: 'Pothole', body: 'Hi' }, { blob: new Blob([new Uint8Array([1, 2, 3])]), fileName: 'p.jpg' });
+    const head = (await file.text()).split('\r\n\r\n')[0];
+    assert.doesNotMatch(head, /^To:/m);
+    assert.match(head, /^Subject: Pothole$/m);
+  });
+
+  test('splits long non-ASCII subjects into short encoded words', async () => {
+    const subject = 'Bache en el carril en dirección este cerca de la Avenida Ñandú número 4306';
+    const file = await buildEmlFile({ to: '', subject, body: 'Hi' }, { blob: new Blob([]), fileName: 'p.jpg' });
+    const head = (await file.text()).split('\r\n\r\n')[0];
+    const words = [...head.matchAll(/=\?UTF-8\?B\?([^?]+)\?=/g)];
+    assert.ok(words.length > 1);
+    assert.ok(words.every((word) => word[0].length <= 75));
+    assert.equal(words.map((word) => Buffer.from(word[1], 'base64').toString('utf8')).join(''), subject);
+  });
 });

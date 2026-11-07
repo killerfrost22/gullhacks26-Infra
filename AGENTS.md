@@ -48,6 +48,7 @@ Design and copy changes MUST NOT weaken these. If a design idea needs one of the
 - **Photos stay private.** Photos are resized and stripped of metadata on the device before upload. Photo GPS only suggests a pin; the user confirms it.
 - **Copy matches the code.** UI text never claims sources the server doesn't query, actions it doesn't take, or certainty it doesn't have. A "not for emergencies" notice is visible in the UI.
 - **Keys stay on the server.** The Gemini key never reaches the browser. Never prefix a key with `VITE_`.
+- **Google Search suggestions are shown as Google sends them.** When a result has `searchSuggestionsHtml`, it stays visible with the result, at the same width as the answer column, with Google's own HTML and CSS unchanged (no restyling of colors, fonts, layout, or focus inside it, and nothing placed inside or between its chips). Contain it from outside only (`min-width: 0`, width, `overflow`). This is a Gemini API terms requirement: <https://ai.google.dev/gemini-api/terms#grounding-with-google-search>.
 
 ## Speed and accessibility limits
 
