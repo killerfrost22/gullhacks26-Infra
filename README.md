@@ -7,7 +7,11 @@ Built for phones first. Works on desktop too.
 Our GullHacks 2026 project. This repo (`gullhacks26-Infra`) is where the team keeps building it.
 
 ## Contents
-
+- [Team](#team)
+- [Abstract](#abstract)
+- [Introduction](#introduction)
+- [Demo](#demo)
+- [Features](#features)
 - [How it works](#how-it-works)
 - [Run it locally](#run-it-locally)
 - [Try it on your phone](#try-it-on-your-phone)
@@ -18,6 +22,40 @@ Our GullHacks 2026 project. This repo (`gullhacks26-Infra`) is where the team ke
 - [Deploy](#deploy)
 - [Privacy](#privacy)
 - [API](#api)
+- 
+## Team
+| Name | Role | GitHub |
+|---|---|---|
+| Nyles Burton | Documentation | [@NBurtonII](https://github.com/NBurtonII) |
+| TBD | | |
+
+## Abstract
+Fix Please is an AI-powered tool that lets users photograph public infrastructure issues, pin the location, and add a short description. In return, they receive an explanation of who is responsible, how to contact them, and a ready-to-send email with the photo attached so they can make their voices heard.
+ 
+## Introduction
+Public infrastructure is a huge cause of frustration and distrust between the members of a community and its governing bodies. Residents live with these problems daily and watch them go unresolved for months. Some of these issues are small, some are large, but all build upon one another and cause people to feel as though the local government does not care about their needs or the community. To this end we created Fix Please, a phone-first web app that helps residents figure out who is responsible for a problem and gives them the words to say something about it.
+ 
+For the GullHack Hackathon, we will focus on obvious physical environment issues. We want residents to be able to report excessive litter, potholes, broken light fixtures, etc. This system could be easily expanded, but we want to ensure that we are being realistic in what we can accomplish in our time.
+ 
+Fix Please does not store reports or send anything on the user's behalf. There are no accounts and no database: the user reviews the drafted email and sends it from their own account. Embedding the tool in local government websites is a goal for future work (see [Future Work](#future-work)).
+ 
+## Demo
+- Live site: https://fixplease.work
+- Demo Jurisdiction: Salisbury University campus and Princess Anne / University of Maryland Eastern Shore (TBC)
+## Features
+1. Users provide the information for a report:
+    - One photo (take one on a phone or upload from the library)
+    - Location, set by photo GPS, "I'm standing here" device location, address search, tapping or dragging a pin on the map, or manual coordinates. The user must confirm the pin before continuing.
+    - An optional text description or clue (for example an HOA, property manager, pole number, or landmark)
+2. AI and API connections use that information to work out who is responsible:
+    - Gemini parses the image to determine the kind of fault and gain additional clues to location.
+    - Photo metadata and the pin give an estimate of where the issue is. Map facts for the pin (road and route number, campus, mapped streetlights and operator, municipality or county) come from OpenStreetMap, Overpass, and the Census.
+    - The description gives additional context about what and where the issue is.
+    - Gemini uses Google Search grounding and URL context to find the responsible body and its published contact information.
+3. The app returns a result that names the responsible office, explains why, and shows how confident it is ("Verified on Official Site", "Best Match", or "Best Guess"). Contacts link to their sources, and "Before you send" warnings flag anything the user should know.
+4. The app drafts an editable email (To, Subject, Message) with the photo attached. The user can send it with the phone's share sheet, download it as an `.eml` file, open it in their mail app, or copy it.
+5. The system is resistant to bot attacks, so that as many requests as possible come from real people: a self-hosted ALTCHA proof-of-work check, rate limits, and a same-origin check.
+6. The system is built for privacy. There are no accounts and no database, nothing is stored, and the user sends the email themselves. A Privacy & Transparency dialog in the app explains what is sent to Gemini.
 
 ## How it works
 
@@ -45,6 +83,41 @@ flowchart LR
 - An email address or phone number only shows up if it's published on an official page we read. If the model doesn't supply one, we look on those pages for a repair or service inbox on the office's own domain (e.g. `streetmaintenance@city.gov`). Personal, press, HR, and webmaster addresses are never picked. Many cities only take reports through a web form, so the result often links to that form and leaves the email's To line for you.
 - If Gemini refuses an answer for repeating web text too closely, the server retries once without quotes. That result can be at most "best match".
 
+### Architecture Diagram
+```mermaid
+flowchart TD
+    R[Resident<br/>photo, pin, optional note] --> FE[React web app<br/>phone-first]
+    FE --> BE
+ 
+    subgraph BE[Express API]
+        direction LR
+        BC[Bot check<br/>ALTCHA + rate limits] --> RES[Gemini research<br/>Search grounding + URL context] --> FMT[Gemini formatting<br/>structured output] --> EV[Evidence checks<br/>sources must load and match]
+    end
+ 
+    RES <--> GEM[Gemini API]
+    BE <--> MAP[Map context<br/>Nominatim, Overpass, Census]
+    BE --> OUT[Result<br/>office, contacts, sources, editable email]
+    OUT --> SEND[Resident sends the email<br/>share sheet, .eml, mail app, copy]
+```
+ 
+### Input
+ - Photo
+ - Text description (optional)
+ - Location (photo GPS, device location, address search, or pin)
+### Processing
+- Photo is resized and re-encoded on the device, which strips its EXIF data
+- Location confirmation and map context for the pin
+- Bot check and rate limits
+- Image analysis and issue classification
+- Responsible agency search
+- Contact lookup
+- Evidence checks (cited pages must load, and contact details must appear on an official page)
+### Output
+- Issue Summary
+- Responsible Agency and confidence level
+- Contact Info with source links
+- Warnings and a "How we know" source list
+- Editable Email with the photo attached
 ## Run it locally
 
 You need:
