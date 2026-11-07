@@ -86,3 +86,5 @@ Finally, the frontend creates the editable email and a downloadable **MIME `.eml
 | Web Share API and MIME `.eml` files | User-controlled handoff with photo attachments |
 
 Recording manuscript: [Introduction video script](video-script.md).
+
+Devpost thumbnail: [thumbnail.png](thumbnail.png) (1500×1000 PNG, 3:2, 70 KB).
