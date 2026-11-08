@@ -4,3 +4,20 @@ dist/
 .env.*
 !.env.example
 *.log
+
+# macOS Finder metadata.
+.DS_Store
+
+# Raw footage, rendered videos, and music stay local: the phone recordings are over GitHub's
+# 100 MB file limit, and the song is licensed. Share finished videos through YouTube or Devpost.
+*.mov
+*.MOV
+*.mp3
+submission/*.mp4
+
+# iPhone originals keep GPS location in their metadata. Commit resized, stripped copies instead
+# (like submission/video/public/team/).
+*.heic
+*.HEIC
+submission/example_pictures/
+submission/team-pictures*/
