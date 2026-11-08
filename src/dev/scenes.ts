@@ -28,6 +28,7 @@ const pinAt: PinState = {
 const confirmed: PinState = { ...pinAt, confirmed: true, context: CONTEXT };
 
 const NOTE = 'Eastbound lane, right next to the bus stop. It has been getting bigger for two weeks.';
+const NOTE_NO_PHOTO = 'Deep pothole in the eastbound lane, right next to the bus stop. Cars swerve around it.';
 
 type SceneBuilder = (photo: PreparedPhoto) => Scene;
 
@@ -40,6 +41,20 @@ const SCENES: Record<string, { gps?: boolean; build: SceneBuilder }> = {
     build: (photo) => ({ health: ONLINE, flow: { photo }, pinUi: { query: 'Campus Drive', results: SEARCH_RESULTS } }),
   },
   'pin-manual': { build: (photo) => ({ health: ONLINE, flow: { photo }, pinUi: { manualOpen: true } }) },
+  'no-photo': { build: () => ({ health: ONLINE, flow: { withoutPhoto: true } }) },
+  'note-no-photo': { build: () => ({ health: ONLINE, flow: { withoutPhoto: true, pin: confirmed, details: '' } }) },
+  'investigating-no-photo': {
+    build: () => ({
+      health: ONLINE,
+      flow: { withoutPhoto: true, pin: confirmed, details: NOTE_NO_PHOTO, phase: 'investigating' },
+    }),
+  },
+  'result-no-photo': {
+    build: () => ({
+      health: ONLINE,
+      flow: { withoutPhoto: true, pin: confirmed, details: NOTE_NO_PHOTO, phase: 'result', report: REPORT_BEST_MATCH },
+    }),
+  },
   note: { build: (photo) => ({ health: ONLINE, flow: { photo, pin: confirmed, details: NOTE } }) },
   'note-town': {
     build: (photo) => ({ health: ONLINE, flow: { photo, pin: { ...confirmed, context: CONTEXT_TOWN }, details: NOTE } }),

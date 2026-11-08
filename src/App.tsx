@@ -65,7 +65,7 @@ export function App() {
     if (shownPath.current === path) return;
     shownPath.current = path;
     // A route change is a new page to a screen reader: announce its heading. The report keeps its place.
-    const visible = mainRef.current?.querySelector<HTMLElement>('.route:not([hidden])');
+    const visible = mainRef.current?.querySelector<HTMLElement>('.page-view:not([hidden])');
     if (!visible) return;
     const selectors = path === '/' ? FLOW_FOCUS : ['[data-route-heading]', 'h1', 'h2'];
     const heading = selectors.map((selector) => visible.querySelector<HTMLElement>(selector)).find(Boolean);
@@ -93,12 +93,12 @@ export function App() {
       </a>
       <SiteHeader />
       <main id="main" tabIndex={-1} ref={mainRef}>
-        {/* The report stays mounted all session, so visiting another page never loses your photo, pin, or answer. */}
-        <div className="route" hidden={path !== '/'}>
+        {/* The report stays mounted all session, so visiting another page never loses your photo, pin, note, or answer. */}
+        <div className="page-view" hidden={path !== '/'}>
           <ReportFlow scene={scene ?? undefined} />
         </div>
         {path !== '/' && (
-          <div className="route" key={path}>
+          <div className="page-view" key={path}>
             {path === '/tech' ? <TechPage /> : path === '/privacy' ? <PrivacyPage /> : <NotFound />}
           </div>
         )}

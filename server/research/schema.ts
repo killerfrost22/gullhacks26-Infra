@@ -24,9 +24,8 @@ const ref = (what: string) =>
     .nullable()
     .describe(`${what}: a source ID from the list (like "S2") or the exact URL written in the brief; null if unknown.`);
 
-/** What the format call returns. Every claim in it is re-checked before anything reaches the user. */
-export const draftSchema = z.object({
-  issue: z.object({
+const issueSchema = (hasPhoto: boolean) =>
+  z.object({
     kind: z.enum(ISSUE_KINDS),
     title: z
       .string()
@@ -36,8 +35,14 @@ export const draftSchema = z.object({
       .describe('One or two sentences on what is wrong. Only the problem: never a street, place, or address (the app adds the location from the pin).'),
     observations: z
       .array(z.string())
-      .describe('Up to 4 short facts about the problem seen in the photo or stated in the note. Never a street, place, or address.'),
-  }),
+      .describe(
+        hasPhoto
+          ? 'Up to 4 short facts about the problem seen in the photo or stated in the note. Never a street, place, or address.'
+          : 'Up to 4 short facts about the problem stated in the note. Never a street, place, or address.',
+      ),
+  });
+
+const sharedFields = {
   organization: z.string().nullable().describe('The office that maintains this spot, exactly as the brief names it; null if unknown.'),
   department: z.string().nullable().describe('The division or department inside that office, name only; null if unknown.'),
   reason: z
@@ -55,14 +60,30 @@ export const draftSchema = z.object({
   phone: z.string().nullable().describe('Phone number from the brief, or null.'),
   phoneSource: ref('Page the phone number is published on'),
   sources: z.array(z.string()).describe('Source IDs or exact URLs of pages that support the answer, most useful first.'),
-  photoLooksDaytime: z.boolean().nullable().describe('Streetlights only: does the photo look like daytime? Else null.'),
   noteSaysLightIsOut: z.boolean().nullable().describe('Streetlights only: does the user note say the light is out? Else null.'),
+};
+
+/** What the format call returns for a report with a photo. Every claim in it is re-checked before anything reaches the user. */
+export const draftSchema = z.object({
+  issue: issueSchema(true),
+  ...sharedFields,
+  photoLooksDaytime: z.boolean().nullable().describe('Streetlights only: does the photo look like daytime? Else null.'),
 });
+
+/** The same draft for a report without a photo: no field or description mentions a photo. */
+const noPhotoDraftSchema = z.object({ issue: issueSchema(false), ...sharedFields });
 
 export type Draft = z.infer<typeof draftSchema>;
 
 /** JSON Schema for Gemini structured output. `$schema` isn't in Gemini's documented schema subset, so it's dropped. */
-export function draftJsonSchema(): Record<string, unknown> {
-  const { $schema: _dialect, ...schema } = z.toJSONSchema(draftSchema) as Record<string, unknown>;
+export function draftJsonSchema(hasPhoto: boolean): Record<string, unknown> {
+  const { $schema: _dialect, ...schema } = z.toJSONSchema(hasPhoto ? draftSchema : noPhotoDraftSchema) as Record<string, unknown>;
   return schema;
+}
+
+/** Validates the format call's JSON. Without a photo there is nothing to judge daylight from, so that answer is null. */
+export function parseDraftValue(value: unknown, hasPhoto: boolean): Draft | null {
+  if (hasPhoto) return draftSchema.safeParse(value).data ?? null;
+  const parsed = noPhotoDraftSchema.safeParse(value);
+  return parsed.success ? { ...parsed.data, photoLooksDaytime: null } : null;
 }

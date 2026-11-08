@@ -16,7 +16,8 @@ function saveFile(file: File) {
 
 interface EmailComposerProps {
   initial: EmailDraft;
-  photo: PreparedPhoto;
+  /** `null` when the user reported without a photo: nothing here then mentions one. */
+  photo: PreparedPhoto | null;
   reportingUrl: string | null;
 }
 
@@ -26,12 +27,14 @@ export function EmailComposer({ initial, photo, reportingUrl }: EmailComposerPro
   const [busy, setBusy] = useState<'share' | 'download' | null>(null);
 
   const photoFile = useMemo(
-    () => new File([photo.blob], photo.fileName, { type: photo.blob.type || 'image/jpeg' }),
+    () => (photo ? new File([photo.blob], photo.fileName, { type: photo.blob.type || 'image/jpeg' }) : null),
     [photo],
   );
-  const canShareFiles = useMemo(() => {
+  // With a photo, sharing needs file support; without one, any Web Share works for the text.
+  const canShare = useMemo(() => {
     try {
-      return typeof navigator.canShare === 'function' && navigator.canShare({ files: [photoFile] });
+      if (photoFile) return typeof navigator.canShare === 'function' && navigator.canShare({ files: [photoFile] });
+      return typeof navigator.share === 'function';
     } catch {
       return false;
     }
@@ -45,7 +48,11 @@ export function EmailComposer({ initial, photo, reportingUrl }: EmailComposerPro
     setBusy('share');
     setStatus('');
     try {
-      await navigator.share({ files: [photoFile], title: draft.subject, text: draft.body });
+      await navigator.share(
+        photoFile
+          ? { files: [photoFile], title: draft.subject, text: draft.body }
+          : { title: draft.subject, text: draft.body },
+      );
       setStatus(draft.to ? `Shared. Check the To line says ${draft.to}.` : 'Shared.');
     } catch (error) {
       if (!(error instanceof DOMException && error.name === 'AbortError')) {
@@ -60,8 +67,12 @@ export function EmailComposer({ initial, photo, reportingUrl }: EmailComposerPro
     setBusy('download');
     setStatus('');
     try {
-      saveFile(await buildEmlFile(draft, { blob: photo.blob, fileName: photo.fileName }));
-      setStatus('Email downloaded. Open the .eml file in your mail app; the photo is attached.');
+      saveFile(await buildEmlFile(draft, photo ? { blob: photo.blob, fileName: photo.fileName } : null));
+      setStatus(
+        photo
+          ? 'Email downloaded. Open the .eml file in your mail app; the photo is attached.'
+          : 'Email downloaded. Open the .eml file in your mail app.',
+      );
     } catch {
       setStatus('We couldn’t build the email file. Copy the text instead.');
     } finally {
@@ -73,7 +84,9 @@ export function EmailComposer({ initial, photo, reportingUrl }: EmailComposerPro
     const text = `${draft.to ? `To: ${draft.to}\n` : ''}Subject: ${draft.subject}\n\n${draft.body}`;
     try {
       await navigator.clipboard.writeText(text);
-      setStatus('Copied the email. The photo isn’t included; save it and attach it yourself.');
+      setStatus(
+        photo ? 'Copied the email. The photo isn’t included; save it and attach it yourself.' : 'Copied the email.',
+      );
     } catch {
       setStatus('Your browser blocked copying. Select the message and copy it yourself.');
     }
@@ -137,7 +150,7 @@ export function EmailComposer({ initial, photo, reportingUrl }: EmailComposerPro
       </div>
 
       <ul role="list" className="send-options">
-        {canShareFiles && (
+        {canShare && (
           <li>
             <button type="button" className="btn btn--primary btn--lg" onClick={share} disabled={busy !== null}>
               {busy === 'share' ? (
@@ -145,15 +158,19 @@ export function EmailComposer({ initial, photo, reportingUrl }: EmailComposerPro
               ) : (
                 <Share2 size={22} aria-hidden="true" />
               )}
-              Send with photo
+              {photo ? 'Send with photo' : 'Share'}
             </button>
-            <p>Opens your share sheet with the photo attached. Pick your mail app and check the To line.</p>
+            <p>
+              {photo
+                ? 'Opens your share sheet with the photo attached. Pick your mail app and check the To line.'
+                : 'Opens your share sheet with the email text. Pick your mail app and check the To line.'}
+            </p>
           </li>
         )}
         <li>
           <button
             type="button"
-            className={canShareFiles ? 'btn' : 'btn btn--primary btn--lg'}
+            className={canShare ? 'btn' : 'btn btn--primary btn--lg'}
             onClick={download}
             disabled={busy !== null}
           >
@@ -164,21 +181,29 @@ export function EmailComposer({ initial, photo, reportingUrl }: EmailComposerPro
             )}
             Download email
           </button>
-          <p>A ready-to-send .eml file with the photo attached. Open it in your mail app.</p>
+          <p>
+            {photo
+              ? 'A ready-to-send .eml file with the photo attached. Open it in your mail app.'
+              : 'A ready-to-send .eml file. Open it in your mail app.'}
+          </p>
         </li>
         <li>
           <a className="btn" href={buildMailto(draft)}>
             <Mail size={22} aria-hidden="true" />
             Open mail app
           </a>
-          <p>
-            The photo won’t be attached this way.{' '}
-            <button type="button" className="inline-link" onClick={() => saveFile(photoFile)}>
-              <ImageDown size={16} aria-hidden="true" />
-              Save the photo
-            </button>{' '}
-            and add it yourself.
-          </p>
+          {photoFile ? (
+            <p>
+              The photo won’t be attached this way.{' '}
+              <button type="button" className="inline-link" onClick={() => saveFile(photoFile)}>
+                <ImageDown size={16} aria-hidden="true" />
+                Save the photo
+              </button>{' '}
+              and add it yourself.
+            </p>
+          ) : (
+            <p>Starts a new email in your mail app with the To line, subject, and message filled in.</p>
+          )}
         </li>
         <li>
           <button type="button" className="btn" onClick={copy}>

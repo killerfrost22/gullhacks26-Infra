@@ -89,15 +89,27 @@ export interface LocationContext {
 // ---------------------------------------------------------------- investigation (POST /api/investigate)
 
 export const DETAILS_MAX_LENGTH = 1500;
+/**
+ * Without a photo, the note is the only description of the problem, so it must say at least this much
+ * (trimmed). Long enough to reject "a", short enough to allow "pothole".
+ */
+export const DETAILS_MIN_LENGTH_WITHOUT_PHOTO = 5;
 /** Upper bound for the whole JSON request body. The app keeps `photoDataUrl` below this. */
 export const INVESTIGATION_BODY_LIMIT_BYTES = 6 * 1024 * 1024;
 
 export interface InvestigationRequest {
-  /** `data:image/jpeg;base64,...` (PNG and WebP also accepted). Already resized and stripped of metadata on the device. */
-  photoDataUrl: string;
+  /**
+   * `data:image/jpeg;base64,...` (PNG and WebP also accepted), already resized and stripped of metadata on the device.
+   * `null` when the user reports without a photo (for example, they saw it while driving and report it later);
+   * then `details` must describe the problem.
+   */
+  photoDataUrl: string | null;
   /** The pin the user confirmed. */
   location: Place;
-  /** The user's free-text note, `''` when empty. At most `DETAILS_MAX_LENGTH` characters. */
+  /**
+   * The user's free-text note, `''` when empty. At most `DETAILS_MAX_LENGTH` characters.
+   * Required (at least `DETAILS_MIN_LENGTH_WITHOUT_PHOTO` characters after trimming) when `photoDataUrl` is `null`.
+   */
   details: string;
 }
 
@@ -187,6 +199,7 @@ export const CAPTCHA_HEADER = 'X-Captcha-Token';
 export const API_ERROR_CODES = [
   'INVALID_REQUEST',
   'INVALID_PHOTO',
+  'DETAILS_REQUIRED',
   'INVALID_LOCATION',
   'PAYLOAD_TOO_LARGE',
   'FORBIDDEN_ORIGIN',

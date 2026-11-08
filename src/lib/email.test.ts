@@ -149,6 +149,13 @@ describe('createEmailDraft', () => {
     assert.equal(draft.subject, 'Pothole in the eastbound lane near 7 Pineway, University Park');
     assert.doesNotMatch(`${draft.subject}\n${draft.body}`, /\b(City|Town|Village|Borough|Township) of\b/);
   });
+
+  test('a report without a photo never mentions a photo or attachment', () => {
+    const draft = createEmailDraft({ report: makeReport(), place: campusPlace, details: 'Deep pothole in the right lane', photoFileName: null });
+    assert.doesNotMatch(`${draft.subject}\n${draft.body}`, /photo|picture|image|attach/i);
+    assert.match(draft.body, /Deep pothole in the right lane/);
+    assert.match(draft.body, /Thank you,$/);
+  });
 });
 
 describe('buildMailto', () => {
@@ -214,5 +221,26 @@ describe('buildEmlFile', () => {
     assert.ok(words.length > 1);
     assert.ok(words.every((word) => word[0].length <= 75));
     assert.equal(words.map((word) => Buffer.from(word[1], 'base64').toString('utf8')).join(''), subject);
+  });
+
+  test('without a photo it is a single text/plain part', async () => {
+    const draft = { to: 'roads@city.gov', subject: 'Pothole near Café Street', body: 'Hello,\n\nLine two\nThank you,' };
+    const file = await buildEmlFile(draft, null);
+    assert.equal(file.name, 'fixplease-report.eml');
+    assert.equal(file.type, 'message/rfc822');
+    const text = await file.text();
+    assert.doesNotMatch(text.replace(/\r\n/g, ''), /[\r\n]/, 'every line ends in CRLF');
+    assert.doesNotMatch(text, /multipart|boundary|Content-Disposition|attachment|image\//i);
+
+    const [head, body] = text.split('\r\n\r\n');
+    assert.match(head, /^To: roads@city\.gov$/m);
+    assert.match(head, /^X-Unsent: 1$/m);
+    assert.match(head, /^MIME-Version: 1\.0$/m);
+    assert.match(head, /^Subject: =\?UTF-8\?B\?[A-Za-z0-9+/=]+\?=$/m);
+    assert.match(head, /^Content-Type: text\/plain; charset=UTF-8$/m);
+    assert.match(head, /^Content-Transfer-Encoding: base64$/m);
+    const lines = body.trim().split('\r\n');
+    assert.ok(lines.every((line) => line.length <= 76));
+    assert.equal(Buffer.from(lines.join(''), 'base64').toString('utf8'), 'Hello,\r\n\r\nLine two\r\nThank you,');
   });
 });

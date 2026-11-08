@@ -18,9 +18,9 @@ import {
   type CallOptions,
   type GroundedOutput,
 } from './gemini.js';
-import { FORMAT_INSTRUCTION, formatInput, RESEARCH_INSTRUCTION, researchInput } from './prompt.js';
+import { formatInput, formatInstruction, researchInput, researchInstruction } from './prompt.js';
 import { hostOf, isSearchRedirect, modelNamedHostAllowed, trustedCampusHost, type UrlRuleContext } from './provenance.js';
-import { draftJsonSchema, draftSchema, type Draft } from './schema.js';
+import { draftJsonSchema, parseDraftValue, type Draft } from './schema.js';
 import { scrubFreeText, type VerifiedValues } from './scrub.js';
 import {
   cleanQuote,
@@ -69,8 +69,9 @@ const WARN_BEST_MATCH =
   "Best match. Worth a quick check: we couldn't find a sentence on an official page that proves this office covers this exact spot.";
 const WARN_DAYTIME =
   "This photo looks like it was taken in daylight, and your note doesn't say the light is out. Add when you saw it out (for example, \"dark every night this week\") so the office knows what to check.";
-const WARN_NO_CONTEXT =
+const WARN_NO_CONTEXT_PHOTO =
   "Map facts for this spot didn't load in time, so this answer is based on the photo, the address, and your note.";
+const WARN_NO_CONTEXT_NOTE = "Map facts for this spot didn't load in time, so this answer is based on the address and your note.";
 const WARN_PARTIAL_CONTEXT =
   "Some map facts didn't load, so this answer may be missing road, campus, or municipal-boundary details.";
 const REASON_UNIDENTIFIED =
@@ -79,7 +80,8 @@ const REASON_UNIDENTIFIED =
 const REASON_CONFIRMED_NEUTRAL = 'An official page we loaded says this office covers this spot. See the sources below.';
 const REASON_BEST_MATCH_NEUTRAL = 'This is our best match for the office that covers this spot. Check the sources below.';
 const TITLE_NEUTRAL = 'Problem to report';
-const SUMMARY_NEUTRAL = 'See the photo for what needs fixing.';
+const SUMMARY_NEUTRAL_PHOTO = 'See the photo for what needs fixing.';
+const SUMMARY_NEUTRAL_NOTE = 'See your note for what needs fixing.';
 
 async function waitForContext(
   getContext: InvestigateOptions['getContext'],
@@ -105,7 +107,7 @@ function urlsInText(text: string): string[] {
   return [...new Set([...text.matchAll(/https?:\/\/[^\s<>"'`)\]|]+/g)].map((match) => match[0].replace(/[.,;:!?]+$/, '')))];
 }
 
-function parseDraft(text: string): Draft {
+function parseDraft(text: string, hasPhoto: boolean): Draft {
   const json = text.trim().replace(/^```(?:json)?\s*|\s*```$/g, '');
   let value: unknown;
   try {
@@ -113,9 +115,9 @@ function parseDraft(text: string): Draft {
   } catch {
     throw researchFailed();
   }
-  const parsed = draftSchema.safeParse(value);
-  if (!parsed.success) throw researchFailed();
-  return parsed.data;
+  const draft = parseDraftValue(value, hasPhoto);
+  if (!draft) throw researchFailed();
+  return draft;
 }
 
 export async function runInvestigation(
@@ -163,6 +165,8 @@ async function investigateWithin(
   };
 
   const point = { latitude: request.location.latitude, longitude: request.location.longitude };
+  // Without a photo the note is the only description, and nothing the model or the server writes may mention a photo.
+  const hasPhoto = request.photoDataUrl !== null;
   const context = await waitForContext(options.getContext, point, signal, deps.contextWaitMs);
   signal.throwIfAborted();
   phase('context');
@@ -174,7 +178,7 @@ async function investigateWithin(
       await createInteraction(
         {
           model,
-          system_instruction: RESEARCH_INSTRUCTION,
+          system_instruction: researchInstruction(hasPhoto),
           input: researchInput(request, context, noQuote),
           tools: [{ type: 'google_search' }, { type: 'url_context' }],
           // Measured live on Nov 7: `low` answered in ~5 s; `medium` plus mandatory URL-context reads took ~44 s,
@@ -240,14 +244,14 @@ async function investigateWithin(
     const interaction = await createInteraction(
       {
         model,
-        system_instruction: FORMAT_INSTRUCTION,
+        system_instruction: formatInstruction(hasPhoto),
         input: formatInput(grounded.text, sourceIds, noQuote),
-        response_format: { type: 'text', mime_type: 'application/json', schema: draftJsonSchema() },
+        response_format: { type: 'text', mime_type: 'application/json', schema: draftJsonSchema(hasPhoto) },
         generation_config: { thinking_level: 'minimal' },
       },
       call,
     );
-    return parseDraft(readInteraction(interaction).text);
+    return parseDraft(readInteraction(interaction).text, hasPhoto);
   };
   const formatted = (async () => {
     try {
@@ -369,10 +373,11 @@ async function investigateWithin(
   // ---- warnings
   const warnings: string[] = [];
   if (organization && !evidence) warnings.push(WARN_BEST_MATCH);
-  if (draft.issue.kind === 'streetlight' && draft.photoLooksDaytime === true && draft.noteSaysLightIsOut !== true) {
+  const looksDaytime = hasPhoto && draft.photoLooksDaytime === true;
+  if (draft.issue.kind === 'streetlight' && looksDaytime && draft.noteSaysLightIsOut !== true) {
     warnings.push(WARN_DAYTIME);
   }
-  if (!context) warnings.push(WARN_NO_CONTEXT);
+  if (!context) warnings.push(hasPhoto ? WARN_NO_CONTEXT_PHOTO : WARN_NO_CONTEXT_NOTE);
   else if (context.partial) warnings.push(WARN_PARTIAL_CONTEXT);
 
   // ---- model-written text may not carry contacts or links the server didn't verify
@@ -381,7 +386,7 @@ async function investigateWithin(
     phone: phone?.value ?? null,
     urls: [...sources.map((source) => source.url), ...(evidence ? [evidence.url] : []), ...(reportingPage ? [reportingPage.url] : [])],
   };
-  const scrub = (text: string | null) => (text ? scrubFreeText(text, verified) : null);
+  const scrub = (text: string | null) => (text ? scrubFreeText(text, verified, { allowPhotoMentions: hasPhoto }) : null);
   const observations = draft.issue.observations
     .flatMap((item) => scrub(item) ?? [])
     .slice(0, 4);
@@ -391,7 +396,7 @@ async function investigateWithin(
     issue: {
       kind: draft.issue.kind,
       title: scrub(draft.issue.title) ?? TITLE_NEUTRAL,
-      summary: scrub(draft.issue.summary) ?? SUMMARY_NEUTRAL,
+      summary: scrub(draft.issue.summary) ?? (hasPhoto ? SUMMARY_NEUTRAL_PHOTO : SUMMARY_NEUTRAL_NOTE),
       observations,
     },
     responsibility: organization

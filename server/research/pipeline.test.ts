@@ -551,6 +551,67 @@ describe('investigate pipeline', () => {
   });
 });
 
+describe('reports without a photo', () => {
+  const noPhoto: InvestigationRequest = { ...request, photoDataUrl: null, details: 'Deep pothole in the eastbound lane just inside the North Gate.' };
+  const PHOTO_WORDS = /photo|picture|image/i;
+
+  it('sends Gemini no image and never mentions a photo in the request', async () => {
+    const h = harness({});
+    await runInvestigation(noPhoto, withContext, h.deps);
+    const [researchBody, formatBody] = h.geminiBodies;
+    const input = researchBody.input as Array<{ type: string; text?: string }>;
+    assert.deepEqual(
+      input.map((part) => part.type),
+      ['text'],
+    );
+    assert.doesNotMatch(`${String(researchBody.system_instruction)}\n${input[0].text}`, PHOTO_WORDS);
+    assert.match(input[0].text ?? '', /Deep pothole in the eastbound lane/);
+    assert.doesNotMatch(JSON.stringify(formatBody), PHOTO_WORDS);
+  });
+
+  it('never warns about daylight, even if the model claims the photo looks like daytime', async () => {
+    const h = harness({
+      format: [
+        () =>
+          json(
+            formatInteraction(
+              draft({
+                issue: { kind: 'streetlight', title: 'Streetlight out', summary: 'A light is out.', observations: [] },
+                photoLooksDaytime: true,
+                noteSaysLightIsOut: false,
+              }),
+            ),
+          ),
+      ],
+    });
+    const result = await runInvestigation({ ...noPhoto, details: 'The light by the bus stop.' }, withContext, h.deps);
+    assert.ok(!result.warnings.some((warning) => /daylight/i.test(warning)));
+    assert.doesNotMatch(JSON.stringify(result), PHOTO_WORDS);
+  });
+
+  it('returns unidentified without any mention of a photo in the summary or warnings', async () => {
+    const h = harness({
+      format: [
+        () =>
+          json(
+            formatInteraction(
+              draft({
+                organization: null,
+                issue: { kind: 'pothole', title: 'Pothole', summary: 'The photo shows a deep pothole.', observations: ['Seen in the picture'] },
+              }),
+            ),
+          ),
+      ],
+    });
+    const result = await runInvestigation(noPhoto, {}, h.deps);
+    assert.equal(result.responsibility.verdict, 'unidentified');
+    assert.equal(result.issue.summary, 'See your note for what needs fixing.');
+    assert.deepEqual(result.issue.observations, []);
+    assert.ok(result.warnings.includes("Map facts for this spot didn't load in time, so this answer is based on the address and your note."));
+    assert.doesNotMatch(JSON.stringify(result), PHOTO_WORDS);
+  });
+});
+
 describe('public entry points', () => {
   let savedKey: string | undefined;
   const savedFetch = globalThis.fetch;

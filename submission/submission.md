@@ -16,15 +16,15 @@ That led to Fix Please: start with the evidence people already have—a photo an
 
 Fix Please guides users through a short reporting flow:
 
-1. **Photograph the problem.** Take or choose a photo. The browser resizes it and removes hidden metadata before upload. GPS from the original image can suggest a location, but the user still confirms the spot.
+1. **Photograph the problem, or skip it.** Take or choose a photo. The browser resizes it and removes hidden metadata before upload. GPS from the original image can suggest a location, but the user still confirms the spot. Someone who saw the problem while driving can choose "Report without a photo" once they've parked; the note then becomes required.
 2. **Confirm the location.** Search for an address, use device location, use the photo’s GPS, or place a pin on the map.
-3. **Add useful context.** A short note can identify a lane, landmark, pole number, campus department, HOA, or other ownership clue.
+3. **Add useful context.** A short note can identify a lane, landmark, pole number, campus department, HOA, or other ownership clue. Without a photo, the note is the description of the problem.
 4. **Find who likely fixes it.** The app combines the photo, location, note, and available geographic context with Gemini’s search of official sources. It presents an organization, an explanation, supporting links, and published contact details when available.
 5. **Review and send.** The user can edit an email draft, download an email file with the photo attached, or use file sharing on a supported phone. An official reporting page is available when found. The user—not Fix Please—decides what to send and sends it from their own account.
 
 The result distinguishes official-site support from a best match, and says plainly when the office can't be identified, showing only the map facts instead of a guessed name. A plausible answer is not presented as guaranteed ownership, and a missing public email address is not filled with an invented one.
 
-Fix Please has no accounts, report database, or analytics. The prepared photo, confirmed pin, and note are sent to Google Gemini; Google may retain search-grounded requests for up to 30 days under its API terms. OpenStreetMap services also receive map and address requests. The app is for routine maintenance, not emergencies.
+Fix Please has no accounts, report database, or analytics. The prepared photo (if any), confirmed pin, and note are sent to Google Gemini; Google may retain search-grounded requests for up to 30 days under its API terms. OpenStreetMap services also receive map and address requests. The app is for routine maintenance, not emergencies.
 
 ## 3) How we built it
 

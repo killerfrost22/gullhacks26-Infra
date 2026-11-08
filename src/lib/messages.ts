@@ -20,6 +20,7 @@ export const errorMessages: Record<ApiErrorCode | 'NETWORK_ERROR', string> = {
   GEOCODER_UNAVAILABLE: "Address lookup isn't responding right now. Tap the map to drop the pin instead.",
   NOT_FOUND: "We couldn't find that. Reload the page and try again.",
   INTERNAL_ERROR: 'Something went wrong. Try again.',
+  DETAILS_REQUIRED: "Without a photo, tell us what's broken in your note.",
   NETWORK_ERROR: "We couldn't reach Fix Please. Check your connection and try again.",
 };
 

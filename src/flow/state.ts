@@ -31,6 +31,8 @@ export type Phase = 'compose' | 'investigating' | 'result';
 
 export interface FlowState {
   photo: PreparedPhoto | null;
+  /** The user chose "Report without a photo". Then the note is required. */
+  withoutPhoto: boolean;
   pin: PinState;
   details: string;
   phase: Phase;
@@ -41,6 +43,7 @@ export interface FlowState {
 
 export const EMPTY_FLOW: FlowState = {
   photo: null,
+  withoutPhoto: false,
   pin: EMPTY_PIN,
   details: '',
   phase: 'compose',

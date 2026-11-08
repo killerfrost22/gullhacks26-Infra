@@ -1,5 +1,11 @@
 import { z } from 'zod';
-import { DETAILS_MAX_LENGTH, type Coordinates, type InvestigationRequest, type Place } from '../shared/types.js';
+import {
+  DETAILS_MAX_LENGTH,
+  DETAILS_MIN_LENGTH_WITHOUT_PHOTO,
+  type Coordinates,
+  type InvestigationRequest,
+  type Place,
+} from '../shared/types.js';
 import { ApiError } from './errors.js';
 
 const latitude = z.number().min(-90).max(90);
@@ -53,6 +59,7 @@ const BAD_REQUEST_MESSAGE = "Something about that request didn't look right. Rel
 const BAD_PHOTO_MESSAGE = "That photo couldn't be read. Use a JPEG, PNG, or WebP image.";
 const BAD_LOCATION_MESSAGE = "That spot isn't a valid map location. Pick the place on the map again.";
 const DETAILS_TOO_LONG_MESSAGE = `Your note is too long. Keep it to ${DETAILS_MAX_LENGTH} characters or fewer.`;
+const DETAILS_REQUIRED_MESSAGE = 'Without a photo, tell us what’s broken in your note.';
 
 /** Validates `POST /api/investigate`. Each part fails with its own code so the app can point at the right step. */
 export function parseInvestigationRequest(body: unknown): InvestigationRequest {
@@ -61,8 +68,10 @@ export function parseInvestigationRequest(body: unknown): InvestigationRequest {
   }
   const input = body as Record<string, unknown>;
 
-  const photo = photoSchema.safeParse(input.photoDataUrl);
-  if (!photo.success) throw new ApiError(400, BAD_PHOTO_MESSAGE, 'INVALID_PHOTO');
+  // A missing or null photo means "report without a photo"; anything else must be a readable image.
+  const photoDataUrl = input.photoDataUrl ?? null;
+  const photo = photoDataUrl === null ? null : photoSchema.safeParse(photoDataUrl);
+  if (photo && !photo.success) throw new ApiError(400, BAD_PHOTO_MESSAGE, 'INVALID_PHOTO');
 
   const location = placeSchema.safeParse(input.location);
   if (!location.success) throw new ApiError(400, BAD_LOCATION_MESSAGE, 'INVALID_LOCATION');
@@ -73,8 +82,13 @@ export function parseInvestigationRequest(body: unknown): InvestigationRequest {
     throw new ApiError(400, message, 'INVALID_REQUEST');
   }
 
+  // Without a photo, the note is the only description of the problem.
+  if (!photo && details.data.trim().length < DETAILS_MIN_LENGTH_WITHOUT_PHOTO) {
+    throw new ApiError(400, DETAILS_REQUIRED_MESSAGE, 'DETAILS_REQUIRED');
+  }
+
   const place: Place = location.data;
-  return { photoDataUrl: photo.data, location: place, details: details.data };
+  return { photoDataUrl: photo ? photo.data : null, location: place, details: details.data };
 }
 
 /** Query values arrive as strings; empty strings and things like `1e999` must not slip through as numbers. */

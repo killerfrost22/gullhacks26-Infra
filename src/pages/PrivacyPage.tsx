@@ -15,7 +15,7 @@ function Ext({ href, children }: { href: string; children: ReactNode }) {
 const FLOWS: { who: string; what: string; detail: ReactNode }[] = [
   {
     who: 'Google Gemini',
-    what: 'Your resized photo, the pin you confirmed and its address, the map facts for it, and your note.',
+    what: 'The pin you confirmed and its address, the map facts for it, your note, and your resized photo if you added one.',
     detail: (
       <>
         Only when you press “Find who fixes it”. We send requests with <code>store: false</code>, but Google keeps
@@ -96,8 +96,8 @@ export function PrivacyPage() {
             <li className="rule">
               <h3>Your photo’s hidden data</h3>
               <p>
-                Before upload, the photo is resized and re-encoded on your device. That removes its metadata: camera,
-                time, and GPS.
+                A photo is optional. If you add one, it’s resized and re-encoded on your device before upload. That
+                removes its metadata: camera, time, and GPS. Without a photo, no image leaves your device at all.
               </p>
             </li>
             <li className="rule">

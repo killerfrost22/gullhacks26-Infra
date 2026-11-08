@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { DETAILS_MAX_LENGTH } from '../shared/types.js';
+import { DETAILS_MAX_LENGTH, DETAILS_MIN_LENGTH_WITHOUT_PHOTO } from '../shared/types.js';
 import { ApiError } from './errors.js';
 import { parseCoordinatesQuery, parseInvestigationRequest, parseSearchQuery } from './validation.js';
 
@@ -60,7 +60,7 @@ test('a photo whose bytes do not match its declared type is INVALID_PHOTO', () =
   rejectsWith(() => parseInvestigationRequest(validBody({ photoDataUrl: dataUrl('webp', PNG) })), 'INVALID_PHOTO');
 });
 
-test('other formats, broken base64, and missing photos are INVALID_PHOTO', () => {
+test('other formats and broken base64 are INVALID_PHOTO', () => {
   for (const photoDataUrl of [
     dataUrl('gif', Buffer.from('GIF89a......')),
     dataUrl('heic', JPEG),
@@ -68,11 +68,28 @@ test('other formats, broken base64, and missing photos are INVALID_PHOTO', () =>
     `data:image/jpeg;base64,${JPEG.toString('base64').slice(0, -1)}`,
     'https://example.invalid/photo.jpg',
     '',
-    undefined,
     42,
   ]) {
     rejectsWith(() => parseInvestigationRequest(validBody({ photoDataUrl })), 'INVALID_PHOTO');
   }
+});
+
+test('a report without a photo (null or missing) passes when the note describes the problem', () => {
+  assert.equal(parseInvestigationRequest(validBody({ photoDataUrl: null })).photoDataUrl, null);
+  const { photoDataUrl: _omitted, ...withoutPhoto } = validBody();
+  assert.equal(parseInvestigationRequest(withoutPhoto).photoDataUrl, null);
+});
+
+test(`without a photo, a note under ${DETAILS_MIN_LENGTH_WITHOUT_PHOTO} characters (trimmed) is DETAILS_REQUIRED`, () => {
+  const justEnough = 'x'.repeat(DETAILS_MIN_LENGTH_WITHOUT_PHOTO);
+  assert.equal(parseInvestigationRequest(validBody({ photoDataUrl: null, details: `  ${justEnough}  ` })).details, `  ${justEnough}  `);
+  for (const details of ['', '   ', 'x'.repeat(DETAILS_MIN_LENGTH_WITHOUT_PHOTO - 1), `  ${'x'.repeat(DETAILS_MIN_LENGTH_WITHOUT_PHOTO - 1)}  `, undefined]) {
+    rejectsWith(() => parseInvestigationRequest(validBody({ photoDataUrl: null, details })), 'DETAILS_REQUIRED');
+  }
+});
+
+test('with a photo, the note stays optional', () => {
+  assert.equal(parseInvestigationRequest(validBody({ details: '' })).details, '');
 });
 
 test(`details: ${DETAILS_MAX_LENGTH} characters pass, ${DETAILS_MAX_LENGTH + 1} are INVALID_REQUEST`, () => {

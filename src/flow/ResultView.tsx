@@ -34,7 +34,8 @@ interface ResultViewProps {
   report: Investigation;
   place: Place;
   details: string;
-  photo: PreparedPhoto;
+  /** `null` when the user reported without a photo. */
+  photo: PreparedPhoto | null;
   /** Map facts the app loaded for the pin, used when the report carries none. */
   pinContext: LocationContext | null;
   onStartOver: () => void;
@@ -44,8 +45,8 @@ export function ResultView({ report, place, details, photo, pinContext, onStartO
   const headingRef = useRef<HTMLHeadingElement>(null);
   const { responsibility: r } = report;
   const draft = useMemo(
-    () => createEmailDraft({ report, place, details, photoFileName: photo.fileName }),
-    [report, place, details, photo.fileName],
+    () => createEmailDraft({ report, place, details, photoFileName: photo?.fileName ?? null }),
+    [report, place, details, photo],
   );
   const context = report.context ?? pinContext;
 
@@ -144,7 +145,7 @@ export function ResultView({ report, place, details, photo, pinContext, onStartO
 
       <section className="result-block" aria-labelledby="issue-title">
         <h3 id="issue-title" className="block-title">
-          What’s in your photo
+          {photo ? 'What’s in your photo' : 'The problem'}
         </h3>
         <p className="issue-title">{report.issue.title}</p>
         <p>{report.issue.summary}</p>
