@@ -198,7 +198,9 @@ a:hover {
   --btn-border: var(--paint-press);
 }
 
-.btn--primary:disabled:hover {
+.btn--primary:disabled:hover,
+.btn--primary[aria-disabled='true']:hover,
+.btn--primary[aria-disabled='true']:active {
   --btn-bg: var(--paint);
   --btn-border: var(--paint);
 }

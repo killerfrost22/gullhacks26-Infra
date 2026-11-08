@@ -32,7 +32,8 @@ export function createEmailDraft(input: {
   report: Investigation;
   place: Place;
   details: string;
-  photoFileName: string;
+  /** `null` when the report has no photo; the email then never mentions one. */
+  photoFileName: string | null;
 }): EmailDraft {
   const { report, place, details, photoFileName } = input;
   const { issue, responsibility } = report;
@@ -52,7 +53,7 @@ export function createEmailDraft(input: {
   if (where) lines.push(`Location: ${where}`);
   if (note) lines.push(`${where ? 'More detail' : 'Location and detail'}: ${note}`);
   if (where || note) lines.push('');
-  lines.push(`I've attached a photo (${photoFileName}).`, '');
+  if (photoFileName) lines.push(`I've attached a photo (${photoFileName}).`, '');
   lines.push('Could you please arrange a repair, or let me know if this should go to a different office?', '');
   lines.push('Thank you,');
 
@@ -99,35 +100,41 @@ function encodeHeader(text: string): string {
   return words.map((word) => `=?UTF-8?B?${bytesToBase64(encoder.encode(word))}?=`).join('\r\n ');
 }
 
-/** A draft email file with the photo attached. Mail apps open it as an unsent message (`X-Unsent: 1`). */
-export async function buildEmlFile(draft: EmailDraft, photo: { blob: Blob; fileName: string }): Promise<File> {
-  const boundary = `fixplease-${crypto.randomUUID()}`;
-  const fileName = photo.fileName.replace(/[^\w.-]/g, '_') || 'photo.jpg';
-  const photoBytes = new Uint8Array(await photo.blob.arrayBuffer());
+/**
+ * A draft email file, with the photo attached when there is one. Mail apps open it as an unsent
+ * message (`X-Unsent: 1`). Without a photo it is a single text/plain part.
+ */
+export async function buildEmlFile(draft: EmailDraft, photo: { blob: Blob; fileName: string } | null): Promise<File> {
   const textBytes = new TextEncoder().encode(draft.body.replace(/\r?\n/g, '\r\n'));
   const headers = [
     ...(draft.to ? [`To: ${oneLine(draft.to)}`] : []),
     `Subject: ${encodeHeader(oneLine(draft.subject))}`,
     'X-Unsent: 1',
     'MIME-Version: 1.0',
-    `Content-Type: multipart/mixed; boundary="${boundary}"`,
   ];
-  const message = [
-    ...headers,
-    '',
-    `--${boundary}`,
-    'Content-Type: text/plain; charset=UTF-8',
-    'Content-Transfer-Encoding: base64',
-    '',
-    wrap76(bytesToBase64(textBytes)),
-    `--${boundary}`,
-    `Content-Type: image/jpeg; name="${fileName}"`,
-    `Content-Disposition: attachment; filename="${fileName}"`,
-    'Content-Transfer-Encoding: base64',
-    '',
-    wrap76(bytesToBase64(photoBytes)),
-    `--${boundary}--`,
-    '',
-  ].join('\r\n');
-  return new File([message], 'fixplease-report.eml', { type: 'message/rfc822' });
+  const textPart = ['Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', wrap76(bytesToBase64(textBytes))];
+  let message: string[];
+  if (photo) {
+    const boundary = `fixplease-${crypto.randomUUID()}`;
+    const fileName = photo.fileName.replace(/[^\w.-]/g, '_') || 'photo.jpg';
+    const photoBytes = new Uint8Array(await photo.blob.arrayBuffer());
+    message = [
+      ...headers,
+      `Content-Type: multipart/mixed; boundary="${boundary}"`,
+      '',
+      `--${boundary}`,
+      ...textPart,
+      `--${boundary}`,
+      `Content-Type: image/jpeg; name="${fileName}"`,
+      `Content-Disposition: attachment; filename="${fileName}"`,
+      'Content-Transfer-Encoding: base64',
+      '',
+      wrap76(bytesToBase64(photoBytes)),
+      `--${boundary}--`,
+      '',
+    ];
+  } else {
+    message = [...headers, ...textPart, ''];
+  }
+  return new File([message.join('\r\n')], 'fixplease-report.eml', { type: 'message/rfc822' });
 }

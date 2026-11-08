@@ -1,5 +1,5 @@
 import { useRef, useState, useSyncExternalStore, type DragEvent } from 'react';
-import { Camera, ImagePlus, Images, LoaderCircle, MapPin, RotateCcw, TriangleAlert, X } from 'lucide-react';
+import { Camera, Car, ImageOff, ImagePlus, Images, LoaderCircle, MapPin, PenLine, RotateCcw, TriangleAlert, X } from 'lucide-react';
 import { messageFor } from '../lib/messages';
 import { PHOTO_MAX_INPUT_BYTES, preparePhoto, type PreparedPhoto } from '../lib/photo';
 
@@ -12,12 +12,16 @@ const coarsePointer = window.matchMedia('(pointer: coarse)');
 
 interface PhotoStepProps {
   photo: PreparedPhoto | null;
+  /** The user chose to report without a photo. */
+  withoutPhoto: boolean;
   onPhoto: (photo: PreparedPhoto) => void;
   onRemove: () => void;
+  onSkip: () => void;
+  onAddAfterAll: () => void;
   initialError?: string;
 }
 
-export function PhotoStep({ photo, onPhoto, onRemove, initialError }: PhotoStepProps) {
+export function PhotoStep({ photo, withoutPhoto, onPhoto, onRemove, onSkip, onAddAfterAll, initialError }: PhotoStepProps) {
   const touch = useSyncExternalStore(
     (listener) => {
       coarsePointer.addEventListener('change', listener);
@@ -125,6 +129,23 @@ export function PhotoStep({ photo, onPhoto, onRemove, initialError }: PhotoStepP
     );
   }
 
+  if (withoutPhoto) {
+    return (
+      <div className="photo-skipped">
+        <p className="photo-skipped-label">
+          <ImageOff size={20} aria-hidden="true" />
+          <span>
+            <strong>No photo.</strong> You’ll describe the problem in your note.
+          </span>
+        </p>
+        <button type="button" className="btn btn--sm btn--quiet" onClick={onAddAfterAll}>
+          <ImagePlus size={18} aria-hidden="true" />
+          Add a photo after all
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="photo-pick">
       {inputs}
@@ -141,7 +162,7 @@ export function PhotoStep({ photo, onPhoto, onRemove, initialError }: PhotoStepP
           </button>
           <button
             type="button"
-            className="btn btn--lg btn--block"
+            className="btn btn--block"
             onClick={() => libraryRef.current?.click()}
             disabled={busy}
           >
@@ -186,6 +207,17 @@ export function PhotoStep({ photo, onPhoto, onRemove, initialError }: PhotoStepP
         </p>
       )}
       {errorNotice}
+      {/* A photo is never required. Someone who saw it from the road must never be pushed to take one. */}
+      <div className="photo-skip">
+        <button type="button" className="btn photo-skip-button" onClick={onSkip} disabled={busy}>
+          <PenLine size={20} aria-hidden="true" />
+          Report without a photo
+        </button>
+        <p className="photo-safety">
+          <Car size={18} aria-hidden="true" />
+          <span>Saw it while driving? Don’t stop for a photo. Report it once you’ve parked, or ask a passenger.</span>
+        </p>
+      </div>
     </div>
   );
 }

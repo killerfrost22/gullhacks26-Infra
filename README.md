@@ -47,7 +47,7 @@ Fix Please does not store reports or send anything on the user's behalf. There a
 - Demo Jurisdiction: Salisbury University campus and Princess Anne / University of Maryland Eastern Shore (TBC)
 ## Features
 1. Users provide the information for a report:
-    - One photo (take one on a phone or upload from the library)
+    - One photo (take one on a phone or upload from the library), or none: "Report without a photo" lets someone who saw it while driving report it later, and then the description is required
     - Location, set by photo GPS, "I'm standing here" device location, address search, tapping or dragging a pin on the map, or manual coordinates. The user must confirm the pin before continuing.
     - An optional text description or clue (for example an HOA, property manager, pole number, or landmark)
 2. AI and API connections use that information to work out who is responsible:
@@ -73,7 +73,7 @@ flowchart LR
   F --> G[Who fixes it + ready-to-send email]
 ```
 
-1. **Snap.** The photo is shrunk on the device and its hidden metadata is stripped. If it has GPS, we use it to suggest the spot.
+1. **Snap, or skip it.** The photo is shrunk on the device and its hidden metadata is stripped. If it has GPS, we use it to suggest the spot. Saw it while driving? Choose "Report without a photo" once you've parked; then the note in step 3 is required, because it's the only description of the problem.
 2. **Pin.** Photo location, "I'm standing here", address search, or tap the map. You confirm the pin.
 3. **Tell us more.** One free-text box: where exactly it is and what you noticed. This is often what separates "the city" from "the state highway department" or "the power company".
 4. **Find who fixes it.** The server pulls map facts for the pin: the nearest road and its route number, whether you're inside a city, town, or township (U.S. Census), the campus you're on and its website, and mapped streetlights and who runs them (OpenStreetMap via Overpass, with Nominatim as the fallback when Overpass is overloaded). Gemini then reads the photo and searches official city, county, state, campus, and utility sites. With the default model (`gemini-3.6-flash`), a full test report took 22 seconds from tap to result; the server gives up after 45.
@@ -274,7 +274,7 @@ Any host that runs one long-lived Node process works (Render, Railway, Fly.io, a
 ## Privacy
 
 - No accounts, no database, no analytics. Reports live in the page and are gone when you close it.
-- The resized photo, pin, and note go to Google Gemini. Requests use `store: false`, but Google keeps search-grounded requests for up to 30 days under its API terms.
+- The resized photo (if you add one), pin, and note go to Google Gemini. Requests use `store: false`, but Google keeps search-grounded requests for up to 30 days under its API terms.
 - Map tiles and address lookups come from OpenStreetMap.
 - The bot check is a self-hosted proof of work (ALTCHA) that runs quietly in the browser.
 - Not for emergencies. Downed wires or someone hurt: call your local emergency number.
@@ -288,7 +288,7 @@ Any host that runs one long-lived Node process works (Render, Railway, Fly.io, a
 | `GET /api/locations/search?q=` | Address search. |
 | `GET /api/locations/reverse?lat=&lon=` | Address for a pin. |
 | `GET /api/locations/context?lat=&lon=` | Map facts for a pin (road, route number, campus, city limits, streetlights). |
-| `POST /api/investigate` | `{ photoDataUrl, location, details }` plus the `X-Captcha-Token` header returns who fixes it, the evidence, and contacts. |
+| `POST /api/investigate` | `{ photoDataUrl, location, details }` plus the `X-Captcha-Token` header returns who fixes it, the evidence, and contacts. `photoDataUrl` may be `null` (no photo); then `details` must be at least 5 characters, or the error is `DETAILS_REQUIRED`. |
 
 Errors are always `{ error, code }`. Shared types live in `shared/types.ts`.
 

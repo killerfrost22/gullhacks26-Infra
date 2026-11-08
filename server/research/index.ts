@@ -12,7 +12,8 @@ export function researchConfigured(env: NodeJS.ProcessEnv = process.env): boolea
 const pageTransport = createPinnedTransport(systemResolver);
 
 /**
- * Photo + pin + note → who maintains it, with every source, quote, and contact checked on a page loaded now.
+ * Pin + note, with or without a photo → who maintains it, with every source, quote, and contact checked on a page
+ * loaded now. Without a photo (`photoDataUrl: null`) the note is the only description, and nothing mentions a photo.
  * Throws ApiError RESEARCH_UNAVAILABLE / RESEARCH_QUOTA / RESEARCH_FAILED, or the caller's abort reason.
  */
 export function investigate(request: InvestigationRequest, options: InvestigateOptions = {}): Promise<Investigation> {

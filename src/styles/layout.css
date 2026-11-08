@@ -28,17 +28,18 @@ main > * {
   flex: 1;
 }
 
-.route {
+/* One wrapper per page. Not `.route`: the tech page's pipeline already uses that name. */
+.page-view {
   display: flex;
   flex-direction: column;
 }
 
-.route > * {
+.page-view > * {
   flex: 1;
 }
 
 /* `display: flex` above would otherwise override the `hidden` attribute on the kept-alive report. */
-.route[hidden] {
+.page-view[hidden] {
   display: none;
 }
 
@@ -391,6 +392,42 @@ main:focus {
   border: 2px solid var(--asphalt-3);
 }
 
+/* No photo: the spot itself stands in, as the survey mark on an asphalt tile. Not an empty frame. */
+.case-spot {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border-radius: var(--radius-2);
+  border: 2px solid var(--asphalt-3);
+  background:
+    repeating-linear-gradient(90deg, transparent 0 46%, rgb(242 194 48 / 18%) 46% 54%, transparent 54% 100%) center / 100% 22% no-repeat,
+    var(--asphalt-2);
+}
+
+.case-spot-mark {
+  width: 72%;
+  height: auto;
+}
+
+.case-spot-mark.is-working {
+  animation: circle-back 1.6s var(--ease-in-out) infinite alternate;
+}
+
+.case-problem {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.case-note--problem {
+  color: #fff;
+  -webkit-line-clamp: 3;
+}
+
+.case-extra .kicker {
+  margin-top: var(--space-3);
+}
+
 .case-meta {
   display: grid;
   gap: var(--space-2);
@@ -408,7 +445,7 @@ main:focus {
   color: #fff;
 }
 
-/* On phones the answer matters more than a recap: the case keeps only the photo and the spot. */
+/* On phones the answer matters more than a recap: the case keeps the spot (and, without a photo, the problem). */
 .case-extra {
   display: none;
   gap: var(--space-2);
@@ -564,6 +601,18 @@ main:focus {
   .case-photo img {
     aspect-ratio: 4 / 3;
     border-radius: var(--radius-3);
+  }
+
+  /* Without a photo, the note is what the office will read: it gets the room a photo would have had. */
+  .case-spot {
+    width: 120px;
+    border-radius: var(--radius-3);
+  }
+
+  .case-note--problem {
+    font-size: var(--step-2);
+    line-height: 1.35;
+    -webkit-line-clamp: 8;
   }
 
   /* Once the report is on its way, the left column is your case; it stays in view beside the answer. */

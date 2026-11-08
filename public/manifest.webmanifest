@@ -1,7 +1,7 @@
 {
   "name": "Fix Please",
   "short_name": "Fix Please",
-  "description": "Snap something broken in the street, pin the spot, and get who fixes it with an email ready to send.",
+  "description": "Spot something broken in the street, pin the spot, and get who fixes it with an email ready to send. A photo is optional.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -11,7 +11,14 @@ const CLUES = [
 
 const COUNTER_FROM = 200;
 
-export function NoteStep({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+interface NoteStepProps {
+  value: string;
+  onChange: (value: string) => void;
+  /** No photo: the note is the only description of the problem, so it's required. */
+  required: boolean;
+}
+
+export function NoteStep({ value, onChange, required }: NoteStepProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const left = DETAILS_MAX_LENGTH - value.length;
 
@@ -26,11 +33,18 @@ export function NoteStep({ value, onChange }: { value: string; onChange: (value:
   return (
     <div className="note-step field">
       <label className="field-label" htmlFor="note">
-        Where exactly, and what did you notice? <span className="optional">Optional</span>
+        {required ? (
+          'What’s broken, and where exactly?'
+        ) : (
+          <>
+            Where exactly, and what did you notice? <span className="optional">Optional</span>
+          </>
+        )}
       </label>
       <p className="field-hint" id="note-hint">
-        A lane, a landmark, a pole number, or who you think owns it. Clues like these often decide between the city,
-        the state, and a utility.
+        {required
+          ? 'Without a photo, this is how the office knows what to fix. Say what’s wrong, and add a lane, a landmark, or a pole number if you can.'
+          : 'A lane, a landmark, a pole number, or who you think owns it. Clues like these often decide between the city, the state, and a utility.'}
       </p>
       <ul role="list" className="clue-chips" aria-label="Add a clue">
         {CLUES.map((clue) => (
@@ -49,8 +63,13 @@ export function NoteStep({ value, onChange }: { value: string; onChange: (value:
         rows={4}
         maxLength={DETAILS_MAX_LENGTH}
         value={value}
+        required={required}
         aria-describedby={left <= COUNTER_FROM ? 'note-hint note-count' : 'note-hint'}
-        placeholder="Example: Northbound lane, next to the bus stop. The light has been out for a week."
+        placeholder={
+          required
+            ? 'Example: Deep pothole in the northbound lane, next to the bus stop.'
+            : 'Example: Northbound lane, next to the bus stop. The light has been out for a week.'
+        }
         onChange={(event) => onChange(event.target.value)}
       />
       {left <= COUNTER_FROM && (

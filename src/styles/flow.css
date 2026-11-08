@@ -184,6 +184,64 @@
   font-size: var(--step--1);
 }
 
+/* "Report without a photo": a full alternative, set apart by a hairline, never hidden as small print. */
+.photo-skip {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+
+.photo-skip-button {
+  justify-self: stretch;
+}
+
+.photo-safety {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  max-width: var(--measure);
+  color: var(--muted);
+  font-size: var(--step--1);
+  line-height: 1.45;
+}
+
+.photo-safety svg {
+  flex: none;
+  margin-top: 0.1em;
+  color: var(--ink-2);
+}
+
+@media (min-width: 560px) {
+  .photo-skip {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--space-3) var(--space-5);
+  }
+
+  .photo-skip-button {
+    justify-self: start;
+  }
+}
+
+.photo-skipped {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+
+.photo-skipped-label {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+
+.photo-skipped-label svg {
+  flex: none;
+  margin-top: 0.15em;
+  color: var(--muted);
+}
+
 .photo-done {
   display: grid;
   gap: var(--space-4);
@@ -561,6 +619,13 @@
 .send-fine {
   color: var(--muted);
   font-size: var(--step--1);
+}
+
+.send-needs-note {
+  padding-left: var(--space-3);
+  border-left: 3px solid var(--paint);
+  font-size: var(--step--1);
+  font-weight: 600;
 }
 
 .send-fine a {

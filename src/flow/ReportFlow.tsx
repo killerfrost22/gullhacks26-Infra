@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { ArrowRight, LoaderCircle, Pencil, Siren, TriangleAlert, WifiOff } from 'lucide-react';
-import type { Health, Place } from '../../shared/types';
+import { DETAILS_MIN_LENGTH_WITHOUT_PHOTO, type Health, type Place } from '../../shared/types';
 import { ApiRequestError, fetchHealth, fetchLocationContext, requestInvestigation } from '../lib/api';
 import { errorMessages, messageFor } from '../lib/messages';
 import type { PreparedPhoto } from '../lib/photo';
-import { PaintRing } from '../components/Mark';
+import { PaintRing, RING_PATH } from '../components/Mark';
 import { Link } from '../router';
 import { ContextChips } from './ContextChips';
 import { Investigating } from './Investigating';
@@ -104,15 +104,27 @@ export function ReportFlow({ scene }: { scene?: Scene }) {
   );
 
   const offline = health?.researchConfigured === false;
-  const { photo, pin, details, phase, report, error } = state;
+  const { photo, withoutPhoto, pin, details, phase, report, error } = state;
+  // Without a photo the note is the only description of the problem, so it must say something.
+  const noteMissing = !photo && details.trim().length < DETAILS_MIN_LENGTH_WITHOUT_PHOTO;
 
   function setPin(update: Partial<PinState>) {
     setState((current) => ({ ...current, pin: { ...current.pin, ...update } }));
   }
 
   function choosePhoto(next: PreparedPhoto) {
-    setState((current) => ({ ...current, photo: next, error: null }));
+    setState((current) => ({ ...current, photo: next, withoutPhoto: false, error: null }));
     if (!pin.confirmed) focusAndReveal(pinHeading);
+  }
+
+  function skipPhoto() {
+    setState((current) => ({ ...current, withoutPhoto: true, error: null }));
+    focusAndReveal(pin.confirmed ? noteHeading : pinHeading);
+  }
+
+  function addPhotoAfterAll() {
+    setState((current) => ({ ...current, withoutPhoto: false }));
+    focusAndReveal(photoHeading);
   }
 
   const onPlaceResolved = useCallback((place: Place | null) => {
@@ -145,7 +157,7 @@ export function ReportFlow({ scene }: { scene?: Scene }) {
   }
 
   async function submit() {
-    if (!photo || !pin.confirmed || !pin.place || offline) return;
+    if ((!photo && !withoutPhoto) || noteMissing || !pin.confirmed || !pin.place || offline) return;
     requestAbort.current?.abort();
     const controller = new AbortController();
     requestAbort.current = controller;
@@ -153,7 +165,7 @@ export function ReportFlow({ scene }: { scene?: Scene }) {
     setState((current) => ({ ...current, phase: 'investigating', error: null }));
     try {
       const result = await requestInvestigation(
-        { photoDataUrl: photo.dataUrl, location: pin.place, details: details.trim() },
+        { photoDataUrl: photo?.dataUrl ?? null, location: pin.place, details: details.trim() },
         controller.signal,
       );
       if (controller.signal.aborted) return;
@@ -185,9 +197,10 @@ export function ReportFlow({ scene }: { scene?: Scene }) {
     focusAndReveal(photoHeading);
   }
 
-  const photoStatus: StepStatus = photo ? 'done' : 'active';
-  const pinStatus: StepStatus = !photo ? 'locked' : pin.confirmed ? 'done' : 'active';
-  const noteStatus: StepStatus = photo && pin.confirmed ? 'active' : 'locked';
+  const photoDone = photo !== null || withoutPhoto;
+  const photoStatus: StepStatus = photoDone ? 'done' : 'active';
+  const pinStatus: StepStatus = !photoDone ? 'locked' : pin.confirmed ? 'done' : 'active';
+  const noteStatus: StepStatus = photoDone && pin.confirmed ? 'active' : 'locked';
 
   return (
     <div className="home" data-phase={phase}>
@@ -207,34 +220,44 @@ export function ReportFlow({ scene }: { scene?: Scene }) {
               Find who fixes it.
             </h1>
             <p className="hero-lede">
-              Snap a photo and pin the exact spot. We look up which office covers it, show you where we found that,
-              and write the email. You send it.
+              Pin the spot and say what’s wrong; a photo is optional. We look up which office covers it, show our
+              sources, and write the email. You send it.
             </p>
           </header>
         ) : (
-          photo &&
           pin.place && (
-            <header className="case">
+            <header className="case" data-photo={photo ? 'yes' : 'no'}>
               <h1 className="visually-hidden">Your report</h1>
-              <figure className="case-photo">
-                <img src={photo.dataUrl} alt="Your photo of the problem" width={photo.width} height={photo.height} />
-                {phase === 'investigating' && <PaintRing className="case-ring" />}
-              </figure>
+              {photo ? (
+                <figure className="case-photo">
+                  <img src={photo.dataUrl} alt="Your photo of the problem" width={photo.width} height={photo.height} />
+                  {phase === 'investigating' && <PaintRing className="case-ring" />}
+                </figure>
+              ) : (
+                // No photo: the spot itself is the picture. The survey mark circles it while the lookup runs.
+                <div className="case-spot" aria-hidden="true">
+                  <svg viewBox="0 0 48 48" className={phase === 'investigating' ? 'case-spot-mark is-working' : 'case-spot-mark'}>
+                    <path d={RING_PATH} fill="none" stroke="var(--paint)" strokeWidth="3.6" strokeLinecap="round" />
+                    <circle cx="24" cy="24" r="4.5" fill="var(--on-asphalt)" />
+                  </svg>
+                </div>
+              )}
               <div className="case-meta">
                 <p className="kicker">The spot</p>
                 <p className="case-place">{pin.place.label}</p>
-                <div className="case-extra">
-                  {/* An unidentified result already shows the map facts as its answer. */}
-                  {pin.context && report?.responsibility.verdict !== 'unidentified' && (
+                {/* An unidentified result already shows the map facts as its answer. */}
+                {pin.context && report?.responsibility.verdict !== 'unidentified' && (
+                  <div className="case-extra">
                     <ContextChips context={pin.context} />
-                  )}
-                  {details.trim() && (
-                    <>
-                      <p className="kicker">Your note</p>
-                      <p className="case-note">{details.trim()}</p>
-                    </>
-                  )}
-                </div>
+                  </div>
+                )}
+                {details.trim() && (
+                  // Without a photo the note is the description of the problem, so it stays on phones too.
+                  <div className={photo ? 'case-extra' : 'case-problem'}>
+                    <p className="kicker">Your note</p>
+                    <p className={photo ? 'case-note' : 'case-note case-note--problem'}>{details.trim()}</p>
+                  </div>
+                )}
               </div>
             </header>
           )
@@ -249,7 +272,7 @@ export function ReportFlow({ scene }: { scene?: Scene }) {
               <p>
                 <strong>{OFFLINE_MESSAGE}</strong>
               </p>
-              <p>You can still add a photo and pin the spot, but we can’t look up who fixes it until it’s back.</p>
+              <p>You can still pin the spot and write your note, but we can’t look up who fixes it until it’s back.</p>
             </div>
           </div>
         )}
@@ -259,8 +282,11 @@ export function ReportFlow({ scene }: { scene?: Scene }) {
             <Step n={1} title="The photo" status={photoStatus} lockedText="" headingRef={photoHeading}>
               <PhotoStep
                 photo={photo}
+                withoutPhoto={withoutPhoto}
                 onPhoto={choosePhoto}
                 onRemove={() => setState((current) => ({ ...current, photo: null }))}
+                onSkip={skipPhoto}
+                onAddAfterAll={addPhotoAfterAll}
                 initialError={scene?.photoError}
               />
             </Step>
@@ -303,12 +329,16 @@ export function ReportFlow({ scene }: { scene?: Scene }) {
 
             <Step
               n={3}
-              title="Anything that helps"
+              title={photo || !withoutPhoto ? 'Anything that helps' : 'What’s broken'}
               status={noteStatus}
-              lockedText="Then, add a clue if you have one."
+              lockedText={withoutPhoto ? 'Then, tell us what’s broken.' : 'Then, add a clue if you have one.'}
               headingRef={noteHeading}
             >
-              <NoteStep value={details} onChange={(value) => setState((current) => ({ ...current, details: value }))} />
+              <NoteStep
+                value={details}
+                required={!photo}
+                onChange={(value) => setState((current) => ({ ...current, details: value }))}
+              />
             </Step>
 
             {noteStatus === 'active' && (
@@ -327,25 +357,34 @@ export function ReportFlow({ scene }: { scene?: Scene }) {
                   )}
                   {cancelled && !error && (
                     <p className="send-fine" role="status">
-                      Cancelled. Nothing was kept. Your photo, pin, and note are still here.
+                      Cancelled. Nothing was kept. Your {photo ? 'photo, pin, and note are' : 'pin and note are'} still
+                      here.
                     </p>
                   )}
                   <button
                     ref={submitButton}
                     type="button"
                     className="btn btn--primary btn--lg btn--block send-button"
-                    onClick={submit}
+                    // Missing note: stay focusable (aria-disabled) so keyboard and screen-reader users reach the
+                    // button, hear why it's off, and land in the note when they press it.
+                    onClick={noteMissing ? () => document.getElementById('note')?.focus() : submit}
                     disabled={offline}
-                    aria-describedby="send-emergency"
+                    aria-disabled={noteMissing || undefined}
+                    aria-describedby={noteMissing ? 'send-needs-note send-emergency' : 'send-emergency'}
                   >
                     Find who fixes it
                     <ArrowRight size={22} aria-hidden="true" />
                   </button>
+                  {noteMissing && !offline && (
+                    <p className="send-needs-note" id="send-needs-note">
+                      Without a photo, write a few words above about what’s broken, so the office knows what to fix.
+                    </p>
+                  )}
                   {offline ? (
                     <p className="send-fine">{OFFLINE_MESSAGE} Try again later.</p>
                   ) : (
                     <p className="send-fine">
-                      Your photo, pin, and note go to Google Gemini to look this up.{' '}
+                      Your {photo ? 'photo, pin, and note go' : 'pin and note go'} to Google Gemini to look this up.{' '}
                       <Link to="/privacy">What we share and why</Link>
                     </p>
                   )}
@@ -366,7 +405,7 @@ export function ReportFlow({ scene }: { scene?: Scene }) {
           <Investigating onCancel={cancel} />
         )}
 
-        {phase === 'result' && report && photo && pin.place && (
+        {phase === 'result' && report && pin.place && (
           <ResultView
             report={report}
             place={pin.place}

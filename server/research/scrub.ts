@@ -38,11 +38,14 @@ function sentenceIsClean(sentence: string, allowed: VerifiedValues, allowedUrls:
   return true;
 }
 
+const PHOTO_WORDS = /\b(?:photos?|photographs?|pictures?|pictured|images?|snapshots?)\b/i;
+
 /**
  * Removes every sentence of model-written text that carries an email address, phone number, or link the server
- * didn't verify. Returns null when nothing usable is left, so the caller can fall back to neutral wording.
+ * didn't verify, and, for a report without a photo, any sentence that talks about a photo. Returns null when nothing
+ * usable is left, so the caller can fall back to neutral wording.
  */
-export function scrubFreeText(text: string, allowed: VerifiedValues): string | null {
+export function scrubFreeText(text: string, allowed: VerifiedValues, options: { allowPhotoMentions: boolean }): string | null {
   const allowedUrls = new Set(allowed.urls.map((url) => url.replace(/\/$/, '')));
   const allowedHosts = new Set(
     allowed.urls.flatMap((url) => {
@@ -56,6 +59,7 @@ export function scrubFreeText(text: string, allowed: VerifiedValues): string | n
   const kept = text
     .trim()
     .split(/(?<=[.!?])\s+/)
+    .filter((sentence) => options.allowPhotoMentions || !PHOTO_WORDS.test(sentence))
     .filter((sentence) => sentenceIsClean(sentence, allowed, allowedUrls, allowedHosts))
     .join(' ')
     .trim();

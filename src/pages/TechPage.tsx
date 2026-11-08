@@ -11,8 +11,8 @@ const FACTS = [
 
 const PIPELINE = [
   {
-    title: 'Snap',
-    text: 'Your photo is shrunk and re-encoded on your device, which strips its hidden data. iPhone HEIC photos are converted there too. If it had GPS, that only suggests the pin.',
+    title: 'Snap, if you want',
+    text: 'A photo is optional; you can report with just a note. If you add one, it’s shrunk and re-encoded on your device, which strips its hidden data. iPhone HEIC photos are converted there too. If it had GPS, that only suggests the pin.',
     tags: ['exifr', 'heic-to', 'Canvas API'],
   },
   {
@@ -22,7 +22,7 @@ const PIPELINE = [
   },
   {
     title: 'Research',
-    text: 'Gemini reads the photo, your note, and the map facts, then searches official city, county, state, campus, and utility sites.',
+    text: 'Gemini reads your note, the map facts, and the photo if you added one, then searches official city, county, state, campus, and utility sites.',
     tags: ['Gemini', 'Google Search grounding', 'URL context'],
   },
   {
@@ -32,7 +32,7 @@ const PIPELINE = [
   },
   {
     title: 'Your email',
-    text: 'The app drafts the email with the photo attached. You edit it and send it from your own account.',
+    text: 'The app drafts the email, with the photo attached if you added one. You edit it and send it from your own account.',
     tags: ['Web Share API', '.eml', 'mailto'],
   },
 ];
@@ -67,7 +67,7 @@ const LAYERS: { title: string; summary: string; items: [string, string][] }[] = 
     title: 'AI',
     summary: 'Google Gemini through the Interactions API, called with plain fetch and no SDK.',
     items: [
-      ['Gemini 3.6 Flash', 'The default model; reads the photo and writes the report'],
+      ['Gemini 3.6 Flash', 'The default model; reads your note and any photo, and writes the report'],
       ['Google Search grounding', 'Finds official pages for the exact spot'],
       ['URL context', 'Reads those pages during the research call'],
       ['Structured output', 'A second call with no tools returns JSON that matches a Zod schema'],
@@ -111,7 +111,7 @@ export function TechPage() {
         <div className="page-hero-inner">
           <p className="kicker">How it’s built</p>
           <h1 className="display page-title" tabIndex={-1} data-route-heading>
-            One photo, one pin, every source checked.
+            One spot, one note, every source checked.
           </h1>
           <p className="page-lede">
             A phone-first React app and one small Node.js server. The server holds the Gemini key, gathers map facts for
@@ -146,7 +146,7 @@ export function TechPage() {
           <div className="section-head">
             <p className="kicker">The route</p>
             <h2 id="pipeline-title" className="display section-title">
-              From photo to email
+              From the street to your email
             </h2>
             <p className="section-lede">
               Each stop adds a clue. Map facts steer the search, and the server checks the answer before you see it.
