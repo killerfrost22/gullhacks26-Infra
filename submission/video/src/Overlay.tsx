@@ -1,9 +1,9 @@
 import React from 'react';
 import {AbsoluteFill, useCurrentFrame} from 'remotion';
-import {FPS, HEIGHT, WIDTH} from './beats';
+import {FPS, HEIGHT, STAGE_WIDTH, WIDTH} from './beats';
 import {fredoka} from './fonts';
 
-const INSET_X = WIDTH * 0.04;
+const INSET_X = STAGE_WIDTH * 0.04;
 const INSET_Y = HEIGHT * 0.04;
 const ARM = 110;
 const RADIUS = 24;
@@ -29,15 +29,15 @@ export const Grain: React.FC = () => {
   );
 };
 
-/** Camera viewfinder: white corner brackets inset 4% and a REC light blinking at 1 Hz. */
+/** Camera viewfinder over the photo stage: white corner brackets inset 4% and a REC light blinking at 1 Hz. */
 export const Viewfinder: React.FC = () => {
   const frame = useCurrentFrame();
   const recOn = Math.floor(frame / (FPS / 2)) % 2 === 0;
-  const right = WIDTH - INSET_X;
+  const right = STAGE_WIDTH - INSET_X;
   const bottom = HEIGHT - INSET_Y;
   return (
     <AbsoluteFill style={{pointerEvents: 'none'}}>
-      <svg width={WIDTH} height={HEIGHT} style={{position: 'absolute', inset: 0}}>
+      <svg width={STAGE_WIDTH} height={HEIGHT} style={{position: 'absolute', inset: 0}}>
         <g fill="none" stroke="#FFFFFF" strokeWidth={8} strokeLinecap="round" strokeLinejoin="round">
           <path d={corner(INSET_X, INSET_Y, 1, 1)} />
           <path d={corner(right, INSET_Y, -1, 1)} />

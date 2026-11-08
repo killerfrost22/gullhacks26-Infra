@@ -1,6 +1,6 @@
 # Photo credits
 
-Beat number, place, then the photo's title, author, license, and source. The photos are resized and cropped to fit the card.
+In order of appearance: place, then the photo's title, author, license, and source. The photos are resized and cropped to fill the frame.
 
 1. McKeldin Mall in autumn, University of Maryland, College Park: "Mckeldin Mall.jpg" by Radhika Kshirsagar, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [source](https://commons.wikimedia.org/wiki/File:Mckeldin_Mall.jpg)
 2. Chesapeake Bay Bridge from Sandy Point State Park: "Chesapeake Bay Bridge viewed from Sandy Point State Park.jpg" by Ben Schumin, [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/), [source](https://commons.wikimedia.org/wiki/File:Chesapeake_Bay_Bridge_viewed_from_Sandy_Point_State_Park.jpg)
@@ -29,3 +29,7 @@ Beat number, place, then the photo's title, author, license, and source. The pho
 25. Waterloo, historic Georgian manor house, Princess Anne: "LRWalls - Waterloo - Princess Anne, MD.jpg" by Linda Roy Walls, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [source](https://commons.wikimedia.org/wiki/File:LRWalls_-_Waterloo_-_Princess_Anne,_MD.jpg)
 26. Rossborough Inn, University of Maryland, College Park: "Rossborough Inn in College Park, MD.jpg" by Blacktupelo, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [source](https://commons.wikimedia.org/wiki/File:Rossborough_Inn_in_College_Park,_MD.jpg)
 27. Maryland State House at sunset, Annapolis: "2006 09 19 - Annapolis - Sunset over State House.JPG" by Thisisbossi, [CC BY-SA 2.5](https://creativecommons.org/licenses/by-sa/2.5/), [source](https://commons.wikimedia.org/wiki/File:2006_09_19_-_Annapolis_-_Sunset_over_State_House.JPG)
+
+## Tech stack logos
+
+The logos in the "Built with" scene are from [Simple Icons](https://simpleicons.org) 16.36.0 ([CC0 1.0](https://github.com/simple-icons/simple-icons/blob/develop/LICENSE.md)), stored as paths and colors in `src/stack-icons.json`. Each logo is a trademark of its owner and is shown only to credit the tools the app is built with.

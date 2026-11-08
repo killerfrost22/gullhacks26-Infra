@@ -1,30 +1,34 @@
 export type Transition = 'stripes' | 'band' | 'square' | 'tint';
 
 export interface Beat {
-  /** Seconds from the start of the video. The beat's number pops in on this frame. */
+  /** Seconds from the start of the video. The beat's photo cuts in on this frame. */
   time: number;
-  number: number;
-  /** Shown in Anton over the left half of the number. */
+  /** The place in the photo, shown in Anton at the lower left. */
   word: string;
+  /** Behind the photo; also the source of the `tint` transition's pastel. */
   bg: string;
-  /** Number color. */
+  /** Darkened for the word's offset shadow. */
   fg: string;
   /** How this beat comes in. `tint` fades the previous beat to a pastel of this beat's `bg` over its last 4 frames. */
   transition: Transition;
   /** Path inside `public/`. Credits: `src/photo-credits.json`. */
   photo: string;
+  /** Vertical crop anchor for the full-frame photo, 0 (top) to 100 (bottom). Defaults to 50. */
+  focus?: number;
 }
 
 export const FPS = 30;
 export const WIDTH = 1920;
 export const HEIGHT = 1080;
-/** Beat 27 runs until this point: 11 bars of the 138 BPM track. */
-export const DURATION_SECONDS = 19.13;
+/** The photos fill the left two-thirds of the frame; the credits roll in the right third. */
+export const STAGE_WIDTH = 1280;
 
-/** The song at `public/track.mp3`; the render picks it up automatically. */
+/** The song at `public/track.mp3`, played from its start; the render picks it up automatically. */
 export const TRACK_FILE = 'track.mp3';
-/** Where the video starts in the song: the drop's downbeat (measured onset, 138 BPM grid). */
-export const TRACK_START_SECONDS = 60.216;
+/** One bar of the 138 BPM track, in seconds. */
+export const BAR = (4 * 60) / 138;
+/** The song's first downbeat, after a two-beat lead-in (measured onset, 138 BPM grid). */
+const FIRST_DOWNBEAT = 1.061;
 
 const YELLOW = '#EBFA1F';
 const AMBER = '#FAC832';
@@ -44,35 +48,50 @@ const TEAL_FG = '#0A4F5C';
 const CORAL_FG = '#FF7A5C';
 const LIME_FG = '#C9F53B';
 
-// Cuts follow the song (138 BPM, starting at the drop): a 3-3-2 eighth-note pattern per bar,
-// so beats are 0.652 / 0.652 / 0.435 s (avg ~0.58 s). #19 lands on a downbeat and holds one bar (1.74 s);
-// #27 holds to the end of bar 11.
-export const BEATS: Beat[] = [
-  {time: 0.000, number: 1, word: '[WORD]', bg: YELLOW, fg: NAVY_FG, transition: 'tint', photo: 'photos/umd-mckeldin-mall-autumn.jpg'},
-  {time: 0.652, number: 2, word: '[WORD]', bg: RASPBERRY, fg: LIME_FG, transition: 'stripes', photo: 'photos/md-chesapeake-bay-bridge.jpg'},
-  {time: 1.304, number: 3, word: '[WORD]', bg: GREEN, fg: NAVY_FG, transition: 'band', photo: 'photos/salisbury-wicomico-river.jpg'},
-  {time: 1.739, number: 4, word: '[WORD]', bg: VIOLET, fg: CORAL_FG, transition: 'square', photo: 'photos/umes-hytche-athletic-center.jpg'},
-  {time: 2.391, number: 5, word: '[WORD]', bg: AMBER, fg: OLIVE_FG, transition: 'tint', photo: 'photos/cp-aviation-museum.jpg'},
-  {time: 3.043, number: 6, word: '[WORD]', bg: TEAL, fg: LIME_FG, transition: 'stripes', photo: 'photos/umd-mckeldin-library.jpg'},
-  {time: 3.478, number: 7, word: '[WORD]', bg: PINK, fg: MAROON_FG, transition: 'band', photo: 'photos/md-baltimore-inner-harbor.jpg'},
-  {time: 4.130, number: 8, word: '[WORD]', bg: LIME, fg: TEAL_FG, transition: 'square', photo: 'photos/su-sea-gull-stadium.jpg'},
-  {time: 4.783, number: 9, word: '[WORD]', bg: PURPLE, fg: LIME_FG, transition: 'tint', photo: 'photos/princess-anne-teackle-mansion.jpg'},
-  {time: 5.217, number: 10, word: '[WORD]', bg: SALMON, fg: NAVY_FG, transition: 'stripes', photo: 'photos/umd-memorial-chapel.jpg'},
-  {time: 5.870, number: 11, word: '[WORD]', bg: YELLOW, fg: NAVY_FG, transition: 'band', photo: 'photos/cp-lake-artemesia.jpg'},
-  {time: 6.522, number: 12, word: '[WORD]', bg: RASPBERRY, fg: LIME_FG, transition: 'square', photo: 'photos/md-great-falls-potomac.jpg'},
-  {time: 6.957, number: 13, word: '[WORD]', bg: GREEN, fg: NAVY_FG, transition: 'tint', photo: 'photos/salisbury-wicomico-county-courthouse.jpg'},
-  {time: 7.609, number: 14, word: '[WORD]', bg: VIOLET, fg: CORAL_FG, transition: 'stripes', photo: 'photos/princess-anne-manokin-presbyterian-church.jpg'},
-  {time: 8.261, number: 15, word: '[WORD]', bg: AMBER, fg: OLIVE_FG, transition: 'band', photo: 'photos/umd-main-administration-building.jpg'},
-  {time: 8.696, number: 16, word: '[WORD]', bg: TEAL, fg: LIME_FG, transition: 'square', photo: 'photos/md-fort-mchenry.jpg'},
-  {time: 9.348, number: 17, word: '[WORD]', bg: PINK, fg: MAROON_FG, transition: 'tint', photo: 'photos/salisbury-downtown-main-street.jpg'},
-  {time: 10.000, number: 18, word: '[WORD]', bg: LIME, fg: TEAL_FG, transition: 'stripes', photo: 'photos/princess-anne-beckford.jpg'},
-  {time: 10.435, number: 19, word: '[WORD]', bg: PURPLE, fg: LIME_FG, transition: 'square', photo: 'photos/su-holloway-hall.jpg'},
-  {time: 12.174, number: 20, word: '[WORD]', bg: SALMON, fg: NAVY_FG, transition: 'tint', photo: 'photos/umd-stamp-student-union.jpg'},
-  {time: 12.826, number: 21, word: '[WORD]', bg: YELLOW, fg: NAVY_FG, transition: 'stripes', photo: 'photos/md-assateague-pony.jpg'},
-  {time: 13.478, number: 22, word: '[WORD]', bg: RASPBERRY, fg: LIME_FG, transition: 'band', photo: 'photos/cp-downtown-route-1.jpg'},
-  {time: 13.913, number: 23, word: '[WORD]', bg: GREEN, fg: NAVY_FG, transition: 'square', photo: 'photos/salisbury-poplar-hill-mansion.jpg'},
-  {time: 14.565, number: 24, word: '[WORD]', bg: VIOLET, fg: CORAL_FG, transition: 'tint', photo: 'photos/md-thomas-point-shoal-lighthouse.jpg'},
-  {time: 15.217, number: 25, word: '[WORD]', bg: AMBER, fg: OLIVE_FG, transition: 'stripes', photo: 'photos/princess-anne-waterloo.jpg'},
-  {time: 15.652, number: 26, word: '[WORD]', bg: TEAL, fg: LIME_FG, transition: 'band', photo: 'photos/umd-rossborough-inn.jpg'},
-  {time: 16.304, number: 27, word: '[WORD]', bg: PINK, fg: MAROON_FG, transition: 'square', photo: 'photos/md-state-house-annapolis.jpg'},
+const PHOTOS: Omit<Beat, 'time'>[] = [
+  {word: 'McKeldin Mall', bg: YELLOW, fg: NAVY_FG, transition: 'tint', photo: 'photos/umd-mckeldin-mall-autumn.jpg'},
+  {word: 'Bay Bridge', bg: RASPBERRY, fg: LIME_FG, transition: 'stripes', photo: 'photos/md-chesapeake-bay-bridge.jpg'},
+  {word: 'Wicomico River', bg: GREEN, fg: NAVY_FG, transition: 'band', photo: 'photos/salisbury-wicomico-river.jpg'},
+  {word: 'Hytche Center', bg: VIOLET, fg: CORAL_FG, transition: 'square', photo: 'photos/umes-hytche-athletic-center.jpg', focus: 15},
+  {word: 'Aviation Museum', bg: AMBER, fg: OLIVE_FG, transition: 'tint', photo: 'photos/cp-aviation-museum.jpg'},
+  {word: 'McKeldin Library', bg: TEAL, fg: LIME_FG, transition: 'stripes', photo: 'photos/umd-mckeldin-library.jpg'},
+  {word: 'Inner Harbor', bg: PINK, fg: MAROON_FG, transition: 'band', photo: 'photos/md-baltimore-inner-harbor.jpg'},
+  {word: 'Sea Gull Stadium', bg: LIME, fg: TEAL_FG, transition: 'square', photo: 'photos/su-sea-gull-stadium.jpg', focus: 10},
+  {word: 'Teackle Mansion', bg: PURPLE, fg: LIME_FG, transition: 'tint', photo: 'photos/princess-anne-teackle-mansion.jpg'},
+  {word: 'Memorial Chapel', bg: SALMON, fg: NAVY_FG, transition: 'stripes', photo: 'photos/umd-memorial-chapel.jpg'},
+  {word: 'Lake Artemesia', bg: YELLOW, fg: NAVY_FG, transition: 'band', photo: 'photos/cp-lake-artemesia.jpg'},
+  {word: 'Great Falls', bg: RASPBERRY, fg: LIME_FG, transition: 'square', photo: 'photos/md-great-falls-potomac.jpg'},
+  {word: 'Courthouse', bg: GREEN, fg: NAVY_FG, transition: 'tint', photo: 'photos/salisbury-wicomico-county-courthouse.jpg', focus: 20},
+  {word: 'Manokin Church', bg: VIOLET, fg: CORAL_FG, transition: 'stripes', photo: 'photos/princess-anne-manokin-presbyterian-church.jpg'},
+  {word: 'Reflecting Pool', bg: AMBER, fg: OLIVE_FG, transition: 'band', photo: 'photos/umd-main-administration-building.jpg'},
+  {word: 'Fort McHenry', bg: TEAL, fg: LIME_FG, transition: 'square', photo: 'photos/md-fort-mchenry.jpg'},
+  {word: 'Main Street', bg: PINK, fg: MAROON_FG, transition: 'tint', photo: 'photos/salisbury-downtown-main-street.jpg'},
+  {word: 'Beckford', bg: LIME, fg: TEAL_FG, transition: 'stripes', photo: 'photos/princess-anne-beckford.jpg'},
+  {word: 'Holloway Hall', bg: PURPLE, fg: LIME_FG, transition: 'square', photo: 'photos/su-holloway-hall.jpg', focus: 0},
+  {word: 'Stamp Union', bg: SALMON, fg: NAVY_FG, transition: 'tint', photo: 'photos/umd-stamp-student-union.jpg', focus: 10},
+  {word: 'Assateague Pony', bg: YELLOW, fg: NAVY_FG, transition: 'stripes', photo: 'photos/md-assateague-pony.jpg'},
+  {word: 'Route 1', bg: RASPBERRY, fg: LIME_FG, transition: 'band', photo: 'photos/cp-downtown-route-1.jpg'},
+  {word: 'Poplar Hill', bg: GREEN, fg: NAVY_FG, transition: 'square', photo: 'photos/salisbury-poplar-hill-mansion.jpg', focus: 25},
+  {word: 'Thomas Point', bg: VIOLET, fg: CORAL_FG, transition: 'tint', photo: 'photos/md-thomas-point-shoal-lighthouse.jpg'},
+  {word: 'Waterloo', bg: AMBER, fg: OLIVE_FG, transition: 'stripes', photo: 'photos/princess-anne-waterloo.jpg'},
+  {word: 'Rossborough Inn', bg: TEAL, fg: LIME_FG, transition: 'band', photo: 'photos/umd-rossborough-inn.jpg'},
+  {word: 'State House', bg: PINK, fg: MAROON_FG, transition: 'square', photo: 'photos/md-state-house-annapolis.jpg'},
 ];
+
+// Each photo holds one bar (1.74 s), cutting on the downbeat; the first also covers the lead-in.
+// The song's first drop (28.9 s) lands on the 17th photo.
+export const BEATS: Beat[] = PHOTOS.map((photo, k) => ({...photo, time: k === 0 ? 0 : FIRST_DOWNBEAT + k * BAR}));
+
+/** The Fix Please end card starts on the downbeat after the last photo, as the song eases into a calmer section. */
+export const END_CARD_SECONDS = FIRST_DOWNBEAT + BEATS.length * BAR;
+/** The tech stack follows three bars later. */
+export const STACK_SECONDS = END_CARD_SECONDS + 3 * BAR;
+/** Four bars after that, on the song's second drop (60.19 s), the team members land one per bar. */
+export const MEMBERS_SECONDS = STACK_SECONDS + 4 * BAR;
+/** Then the team photo, which holds four bars while the music fades out. */
+export const TEAM_SECONDS = MEMBERS_SECONDS + 4 * BAR;
+export const DURATION_SECONDS = TEAM_SECONDS + 4 * BAR;
+/** The team photo, in `public/`. */
+export const TEAM_PHOTO = 'team/teampic.jpg';
+/** The music fades out over the last two bars. */
+export const MUSIC_FADE_SECONDS = 2 * BAR;
