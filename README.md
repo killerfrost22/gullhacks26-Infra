@@ -246,7 +246,8 @@ For design changes, also follow the review loop in [`AGENTS.md`](AGENTS.md). In 
 | "We've hit our lookup limit for now." | The key's project is out of Gemini or Search grounding quota. Check billing and limits in [AI Studio](https://aistudio.google.com/usage). |
 | "That's a lot of reports in a short time." | Raise `RESEARCH_RATE_LIMIT` in `.env` and restart, or wait 15 minutes. |
 | "I'm standing here" or the bot check fails on a phone | They need HTTPS. Use the tunnel setup above. |
-| "Other formats, including HEIC, are not supported." | Export the photo as JPEG, or set the iPhone camera to Formats → "Most Compatible". |
+| "We couldn’t open that HEIC photo." | The HEIC file is damaged or uses a variant the decoder can't read. Export it as JPEG, or set the iPhone camera to Formats → "Most Compatible". |
+| A HEIC photo takes a few seconds on Chrome or Firefox | Expected the first time: those browsers can't read HEIC, so the page downloads the decoder (about 0.8 MB) and converts the photo on the device. Safari reads HEIC itself. |
 | Map facts show the city but no road, campus, or streetlights | The public Overpass server is overloaded or down; the server skips it for 60 s after a failure. Point `OVERPASS_URL` in `.env` at another instance and restart. |
 | `npm` fails in WSL with `node: not found` | Node is only installed on Windows. Run npm from PowerShell or Git Bash. |
 
@@ -305,6 +306,7 @@ GullHacks rules allow public frameworks if we credit them. Fix Please is built o
 | [tsx](https://tsx.is), [concurrently](https://github.com/open-cli-tools/concurrently), [dotenv](https://github.com/motdotla/dotenv) | Running the server, dev scripts, `.env` loading | MIT, MIT, BSD-2-Clause |
 | [Leaflet](https://leafletjs.com) | Map | BSD-2-Clause |
 | [exifr](https://github.com/MikeKovarik/exifr) | Reading photo GPS on the device | MIT |
+| [heic-to](https://github.com/hoppergee/heic-to) ([libheif](https://github.com/strukturag/libheif)) | Converting iPhone HEIC photos on the device in browsers that can't read HEIC; loaded only when a HEIC photo is picked | LGPL-3.0 |
 | [DOMPurify](https://github.com/cure53/DOMPurify) | Sanitizing Google search suggestions | MPL-2.0 or Apache-2.0 |
 | [ALTCHA](https://altcha.org) (`altcha-lib`) | Self-hosted proof-of-work bot check | MIT |
 | [Lucide](https://lucide.dev) (`lucide-react`) | Icons | ISC |

@@ -8,7 +8,7 @@ The original plan (a public report database with tracking codes, a browse map, a
 
 **Status (2026-11-07, `feat/rebuild`)**
 - 176/176 tests pass (`npm test`); `tsc --noEmit` and `vite build` are clean.
-- First-load JS is 93.8 kB gzip (80 kB with Brotli, which the server now sends). Leaflet (45 kB), exifr, and DOMPurify load only when needed. 2 font files on first load.
+- First-load JS is 96.5 kB gzip (82 kB with Brotli, which the server sends), measured after the no-photo and HEIC merges. Leaflet (45 kB), exifr, DOMPurify, and the HEIC decoder (heic-to, 809 kB) load only when needed. 2 font files on first load.
 - Lighthouse mobile on the production build (re-run on merged `main`, 6ce3a95): Performance 98, Accessibility 100, Best Practices 100 on `/`, `/tech`, `/privacy`; LCP 2.1–2.2 s, CLS ≤ 0.037.
 - axe: no violations on every page and every flow state (dev scene harness), at 375 and 1440 px.
 - Live end-to-end on the production build, `gemini-3.6-flash` (the default since `7d92769`): photo → search → pin → note → report in 22 s, "Best match" (University of Maryland Facilities Management), report form and phone verified on facilities.umd.edu, no console errors. An earlier run on `gemini-3.5-flash-lite` took 16 s, named Maryland SHA, and downloaded an `.eml` with the photo attached and no EXIF. Same spot, two different offices, both "Best match": another reason to find a demo spot that reaches "Confirmed".
@@ -56,7 +56,7 @@ The original plan (a public report database with tracking codes, a browse map, a
 
 - [ ] **Real-device pass on iPhone Safari and Android Chrome**, on https://fixplease.work:
   - Take a photo (rear camera) and From your library, and the "Report without a photo" path (text-only Share)
-  - Confirm iPhone photos arrive as JPEG; HEIC is rejected with the "export as JPEG / Most Compatible" advice
+  - Confirm iPhone HEIC photos open from the library and the camera (Safari decodes them natively), and that a HEIC on Android Chrome converts through heic-to
   - "I'm standing here" permission prompt and the denied path
   - Send with photo share sheet
   - Add to Home Screen
@@ -90,7 +90,6 @@ The original plan (a public report database with tracking codes, a browse map, a
 - [ ] **Real progress while a report runs.** The request is a single call with no progress events, so the screen lists what happens without claiming which step is running. Stream stage events from the server (e.g. SSE) to show real progress.
 - [ ] Google's search-suggestion chips are 32 px tall at 768 px and up (under our 44 px target) and follow the device's dark mode on our light page. Google's terms require showing them unchanged, so this can only change if Google's markup does.
 - [ ] For sustained public traffic, move off the public OSM tile server, Nominatim, and Overpass (usage policies), or self-host them. `NOMINATIM_BASE_URL` and `OVERPASS_URL` already make that a config change; tiles are hard-coded in `src/flow/PinMap.tsx`.
-- [ ] HEIC on desktop: convert it instead of rejecting it.
 - [ ] More than one photo per report (currently exactly one).
 - [ ] Service worker for the app shell (the manifest and icons already exist).
 - [ ] Component / end-to-end tests. Current tests cover `server/` and `src/lib/` only.
@@ -113,7 +112,7 @@ The original plan (a public report database with tracking codes, a browse map, a
 
 ### Client
 - [x] New identity: "the street and the paperwork" (asphalt column, paper sheet, survey-paint orange), Big Shoulders + Public Sans (self-hosted variable fonts), a stamp for the verdict, and survey-paint rings: the wordmark circles FIX the way the headline circles "broken", and a hand-sprayed loop around a spot is the favicon, app icon, and map pin.
-- [x] Report flow on one page: photo (camera, library, drag-and-drop; HEIC advice; on-device resize and metadata strip; GPS suggestion), pin (Leaflet loaded on demand; photo GPS, device location, address search, tap/drag, manual coordinates; "Yes, it's here" required; map-fact chips), note (1,500 chars, quick clues), report, result.
+- [x] Report flow on one page: photo (camera, library, drag-and-drop; HEIC converted on the device, natively in Safari and via heic-to elsewhere; on-device resize and metadata strip; GPS suggestion), pin (Leaflet loaded on demand; photo GPS, device location, address search, tap/drag, manual coordinates; "Yes, it's here" required; map-fact chips), note (1,500 chars, quick clues), report, result.
 - [x] Report without a photo: a "Report without a photo" choice in step 1 (with a "saw it while driving? report it once you've parked" line), so nobody has to take a photo from behind the wheel. The note is then required (at least 5 characters, enforced in the app and by the server's `DETAILS_REQUIRED`); the research, result, and email never mention a photo, and the email is text-only.
 - [x] Result: "Confirmed on an official site" / "Best match. Worth a quick check." / "We couldn't identify the office" (map facts only); evidence quote, contacts with source links, reporting page, "Before you send" warnings, "How we know" sources, Google search suggestions in a shadow root; editable email with Send with photo (Web Share), Download email (`.eml` with the photo), Open mail app, Copy.
 - [x] `/tech` and `/privacy` pages; "not for emergencies" notice in the footer and near the submit button; OSM attribution; no AI-active claims when the key is missing.

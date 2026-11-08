@@ -12,8 +12,8 @@ const FACTS = [
 const PIPELINE = [
   {
     title: 'Snap, if you want',
-    text: 'A photo is optional; you can report with just a note. If you add one, it’s shrunk and re-encoded on your device, which strips its hidden data. If it had GPS, that only suggests the pin.',
-    tags: ['exifr', 'Canvas API'],
+    text: 'A photo is optional; you can report with just a note. If you add one, it’s shrunk and re-encoded on your device, which strips its hidden data. iPhone HEIC photos are converted there too. If it had GPS, that only suggests the pin.',
+    tags: ['exifr', 'heic-to', 'Canvas API'],
   },
   {
     title: 'Pin and map facts',
@@ -46,6 +46,7 @@ const LAYERS: { title: string; summary: string; items: [string, string][] }[] = 
       ['Vite 8', 'Dev server and production build; the map and photo tools load only when needed'],
       ['Leaflet + OpenStreetMap', 'The map and the draggable pin'],
       ['exifr + Canvas API', 'Reads photo GPS, then resizes and strips metadata on your device'],
+      ['heic-to (libheif)', 'Converts iPhone HEIC photos on your device when the browser can’t, loaded only when needed'],
       ['altcha-lib in a Web Worker', 'Solves the self-hosted proof-of-work bot check without freezing the page'],
       ['DOMPurify', 'Cleans Google’s search suggestions before they’re shown'],
       ['Plain CSS, Lucide icons', 'Public Sans and Big Shoulders, self-hosted'],

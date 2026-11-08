@@ -37,7 +37,8 @@ describe('preparePhoto', () => {
     await assert.rejects(preparePhoto(file), (error) => error instanceof PhotoError && error.code === 'TOO_LARGE');
   });
 
-  test('rejects HEIC and non-images by content, not by name', async () => {
+  test('an undecodable HEIC gets the HEIC advice, and non-images are rejected by content, not by name', async () => {
+    // Only an ftyp box, no image data: neither the browser nor the HEIC decoder can read it.
     const heic = new File([ftyp('heic', ['mif1'])], 'photo.jpg', { type: 'image/jpeg' });
     await assert.rejects(preparePhoto(heic), (error) => error instanceof PhotoError && error.code === 'HEIC');
     const text = new File(['not an image at all'], 'photo.jpg', { type: 'image/jpeg' });

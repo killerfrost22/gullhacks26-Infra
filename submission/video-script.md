@@ -11,7 +11,7 @@ Read the **Voiceover** passages aloud. **Screen** directions describe what to re
 
 - Start the app using the instructions in the [project README](../README.md#run-it-locally). Live investigation needs a configured Gemini API key with access to search grounding and a working internet connection.
 - Choose a real, non-emergency maintenance issue and a photo you have permission to use. Know its actual location. Avoid faces, license plates, private information, and unsafe filming positions.
-- Use a JPEG, PNG, or WebP photo under 15 MB. Convert HEIC photos before the demo.
+- Use a JPEG, PNG, WebP, or HEIC photo under 15 MB. iPhone HEIC photos are converted on the device.
 - Rehearse the photo → pin → note → investigation → sources → email flow with that same issue. Use truthful location details, not invented observations or a staged authority response.
 - Read the returned sources before filming. Keep the actual confidence label visible; do not turn a best match into a verified result in the edit. If no useful source is returned, choose another real issue for the main walkthrough rather than manufacturing evidence.
 - Keep notifications and personal mail out of frame. Leave enough lookup quota for the take; the default investigation limit is five reports per IP address per 15 minutes.

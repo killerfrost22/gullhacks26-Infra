@@ -22,11 +22,12 @@ export interface PreparedPhoto {
 
 export type PhotoErrorCode = 'UNSUPPORTED' | 'HEIC' | 'TOO_LARGE' | 'UNREADABLE';
 
+// The Settings path uses no-break spaces so it wraps as one unit instead of splitting across lines.
 const PHOTO_ERROR_MESSAGES: Record<PhotoErrorCode, string> = {
-  UNSUPPORTED: "That file isn't a photo we can use. Choose a JPEG, PNG, or WebP image.",
-  HEIC: "HEIC photos can't be read here. Choose a JPEG instead, or on iPhone set Settings › Camera › Formats to Most Compatible.",
+  UNSUPPORTED: 'That file isn’t a photo we can use. Choose a JPEG, PNG, WebP, or HEIC image.',
+  HEIC: 'We couldn’t open that HEIC photo. Try another one, or on iPhone set Settings\u00a0›\u00a0Camera\u00a0›\u00a0Formats to Most\u00a0Compatible.',
   TOO_LARGE: 'That photo is over 15 MB. Choose a smaller one.',
-  UNREADABLE: "We couldn't open that photo. Try another one.",
+  UNREADABLE: 'We couldn’t open that photo. Try another one.',
 };
 
 export class PhotoError extends Error {
@@ -44,8 +45,10 @@ const ascii = (bytes: Uint8Array, start: number, end: number) => String.fromChar
 const HEIF_BRANDS = new Set(['heic', 'heix', 'hevc', 'hevx', 'heim', 'heis', 'hevm', 'hevs', 'mif1', 'msf1']);
 const AVIF_BRANDS = new Set(['avif', 'avis']);
 
+type ImageType = 'jpeg' | 'png' | 'webp' | 'heic';
+
 /** Identifies the image format from its first bytes; the file name and MIME type can't be trusted. */
-export function sniffImageType(bytes: Uint8Array): 'jpeg' | 'png' | 'webp' | 'heic' | null {
+export function sniffImageType(bytes: Uint8Array): ImageType | null {
   if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return 'jpeg';
   if (bytes.length >= 8 && [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].every((b, i) => bytes[i] === b)) {
     return 'png';
@@ -109,23 +112,37 @@ function readDataUrl(blob: Blob): Promise<string> {
 }
 
 /**
+ * Decodes the photo upright. Safari reads HEIC itself; other browsers fetch a HEIC decoder (libheif in a Web Worker,
+ * about 0.8 MB gzip) only when someone actually picks a HEIC photo, so it never counts against the first load.
+ */
+async function decodePhoto(file: File, type: ImageType): Promise<ImageBitmap> {
+  try {
+    // Applies the EXIF orientation while decoding, so the photo stays upright once the metadata is gone.
+    return await createImageBitmap(file, { imageOrientation: 'from-image' });
+  } catch {
+    if (type !== 'heic') throw new PhotoError('UNREADABLE');
+  }
+  try {
+    // Dynamic on purpose: the decoder is ~0.8 MB gzip and must stay out of the 160 kB first-load JS budget.
+    const { heicTo } = await import('heic-to');
+    // libheif applies the HEIF rotation and mirror boxes itself, so this bitmap is upright too.
+    return await heicTo({ blob: file, type: 'bitmap' });
+  } catch {
+    throw new PhotoError('HEIC');
+  }
+}
+
+/**
  * Shrinks the photo to at most 1920 px on the long edge and re-encodes it as JPEG, which drops
  * EXIF/GPS and every other metadata block. GPS is read from the original first, only to suggest a pin.
  */
 export async function preparePhoto(file: File): Promise<PreparedPhoto> {
   if (file.size > PHOTO_MAX_INPUT_BYTES) throw new PhotoError('TOO_LARGE');
   const type = sniffImageType(new Uint8Array(await file.slice(0, 64).arrayBuffer()));
-  if (type === 'heic') throw new PhotoError('HEIC');
   if (type === null) throw new PhotoError('UNSUPPORTED');
 
   const gps = readGps(file);
-  let bitmap: ImageBitmap;
-  try {
-    // Applies the EXIF orientation while decoding, so the photo stays upright once the metadata is gone.
-    bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
-  } catch {
-    throw new PhotoError('UNREADABLE');
-  }
+  const bitmap = await decodePhoto(file, type);
 
   const canvas = document.createElement('canvas');
   try {
