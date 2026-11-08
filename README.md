@@ -30,7 +30,7 @@ Our GullHacks 2026 project. This repo (`gullhacks26-Infra`) is where the team ke
 | Nyles Burton | Documentation | [@NBurtonII](https://github.com/NBurtonII) |
 | Gabby Ao | Business Analyst | [@gabbyao](https://github.com/gabbyao) |
 | Yizhan Ao | Programmer | [@killerfrost22](https://github.com/killerfrost22) |
-| Padma Waiba | Testing |[@ybajames] (ybajames23@gmail.com) |
+| Padma Waiba | Testing |[@ybajames](ybajames23@gmail.com) |
 
 ## Abstract
 Fix Please is an AI-powered tool that lets users photograph public infrastructure issues, pin the location, and add a short description. In return, they receive an explanation of who is responsible, how to contact them, and a ready-to-send email with the photo attached so they can make their voices heard.
