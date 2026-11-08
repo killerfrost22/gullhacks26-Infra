@@ -3,7 +3,9 @@ import { Camera, ImagePlus, Images, LoaderCircle, MapPin, RotateCcw, TriangleAle
 import { messageFor } from '../lib/messages';
 import { PHOTO_MAX_INPUT_BYTES, preparePhoto, type PreparedPhoto } from '../lib/photo';
 
-const ACCEPT = 'image/jpeg,image/png,image/webp';
+// HEIC is listed by type and extension: desktop file dialogs hide .heic files unless asked, and iPhone Safari then
+// hands over the original HEIC, which it decodes natively.
+const ACCEPT = 'image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif';
 const MAX_MB = Math.round(PHOTO_MAX_INPUT_BYTES / (1024 * 1024));
 
 const coarsePointer = window.matchMedia('(pointer: coarse)');
@@ -164,7 +166,7 @@ export function PhotoStep({ photo, onPhoto, onRemove, initialError }: PhotoStepP
           <ImagePlus size={32} aria-hidden="true" className="dropzone-icon" />
           <p className="dropzone-text">
             <strong>Drop a photo here</strong>
-            <span>JPEG, PNG, or WebP, up to {MAX_MB} MB</span>
+            <span>JPEG, PNG, WebP, or HEIC, up to {MAX_MB} MB</span>
           </p>
           <button
             type="button"
