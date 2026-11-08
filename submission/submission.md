@@ -28,7 +28,7 @@ Fix Please has no accounts, report database, or analytics. The prepared photo, c
 
 ## 3) How we built it
 
-We built the interface with **React, TypeScript, and Vite**, using a responsive layout that works on phones and desktop. **Leaflet** displays the map, and **exifr** reads optional GPS from the original photo. The browser then redraws the image to a canvas and exports a resized JPEG without the original metadata.
+We built the interface with **React, TypeScript, and Vite**, using a responsive layout that works on phones and desktop. **Leaflet** displays the map, and **exifr** reads optional GPS from the original photo. The browser then redraws the image to a canvas and exports a resized JPEG without the original metadata. iPhone HEIC photos go through the same path: Safari decodes them itself, and other browsers load **heic-to** (libheif compiled to WebAssembly) only when a HEIC photo is picked.
 
 A **Node.js and Express** backend keeps the Gemini API key off the client and coordinates location lookup, investigation, and verification. Shared TypeScript types connect the frontend and backend; **Zod** defines and validates the structured research output.
 
@@ -81,6 +81,7 @@ Finally, the frontend creates the editable email and a downloadable **MIME `.eml
 | U.S. Census Bureau geographic data | U.S. municipality and county context |
 | Zod | Structured report schema and validation |
 | exifr and Canvas API | Local photo GPS extraction, resizing, and metadata removal |
+| heic-to (libheif) | On-device conversion of iPhone HEIC photos in browsers that can't read them |
 | ALTCHA and express-rate-limit | Proof-of-work bot protection and request limits |
 | DOMPurify | Sanitizing search-suggestion HTML before rendering |
 | Web Share API and MIME `.eml` files | User-controlled handoff with photo attachments |
