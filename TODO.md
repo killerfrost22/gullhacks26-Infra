@@ -69,8 +69,8 @@ The original plan (a public report database with tracking codes, a browse map, a
   - Cancel investigation
   - Slow network
   - No console errors through the demo flow
-- [ ] **Find a demo spot that reaches "Confirmed on an official site".** Test runs so far ended at "Best match". Try a few spots on numbered state routes, where the state road agency publishes which roads it maintains.
-- [ ] **Record the video** from `submission/video-script.md` (~2:30, one real issue, no staged evidence).
+- [ ] **Find a demo spot that reaches "Confirmed on an official site".** Test runs so far ended at "Best match". Try a few spots on numbered state routes, where the state road agency publishes which roads it maintains. (Nov 8: the Salisbury University lamp post at 1101 Camden Avenue reached "Confirmed" on Salisbury University Physical Plant once, then "Best match" on the next two runs; the video uses a "Best match" run.)
+- [x] **Record the video** from `submission/video-script.md`: `submission/fixplease-intro.mp4` (2:56, 1080p30). Team footage `submission/scene1-3` plus captures of fixplease.work with ElevenLabs voiceover; edit in `submission/video/src/intro/`, media in `submission/video/public/intro/` (local only, gitignored), render with `npm run render:intro`.
 - [ ] **Record a backup** of the full flow in case Wi-Fi or geolocation fails on stage.
 - [ ] **Submit to Devpost** using `submission/submission.md`; add team members.
 - [ ] **README:** add screenshots or a GIF and team members.

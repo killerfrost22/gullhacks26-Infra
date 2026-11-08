@@ -1,3 +1,5 @@
 out/
 # Licensed/copyrighted music stays local; never push it to the public repo.
 public/track.mp3
+# Intro video media (phone footage, site captures, voiceover): large binaries regenerated locally.
+public/intro/
