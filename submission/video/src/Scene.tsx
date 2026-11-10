@@ -1,64 +1,37 @@
 import React from 'react';
-import {AbsoluteFill, Easing, Img, interpolate, random, spring, staticFile} from 'remotion';
+import {AbsoluteFill, Img, interpolate, random, spring, staticFile} from 'remotion';
 import {type Beat, FPS} from './beats';
-import {shade} from './color';
+import {luminance} from './color';
 import {anton, fredoka} from './fonts';
 
-const NUMBER_SIZE = 690;
-const NUMBER_DEPTH = 20;
-/** The number is centered in the left part of the frame. */
-const NUMBER_CENTER_X = 530;
-/** Fredoka 700 digit advance, measured from a render (~0.54 em). */
-const DIGIT_WIDTH = 0.54 * NUMBER_SIZE;
-/** Keeps the word inside the left corner bracket (inset 4% = 77 px). */
-const WORD_MIN_X = 120;
-const WORD_MAX_WIDTH = 900;
-const WORD_CENTER_Y = 585;
-const CARD_WIDTH = 860;
-const CARD_HEIGHT = 600;
-const CARD_BORDER = 14;
+/** Keeps the caption inside the left corner bracket (inset 4% = 77 px). */
+const CAPTION_LEFT = 120;
+/** Keeps the caption above the bottom corner bracket (its arm reaches up to y = 927). */
+const CAPTION_BOTTOM = 160;
+const WORD_MAX_SIZE = 170;
+const WORD_MAX_WIDTH = 1300;
 
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 
-/** Pop-in: 0.8 → 1.05 → 1 over 6 frames. */
-const popScale = (frame: number) =>
-  interpolate(frame, [0, 3, 6], [0.8, 1.05, 1], {...clamp, easing: Easing.out(Easing.quad)});
-
-const PhotoCard: React.FC<{beat: Beat; index: number; frame: number; length: number}> = ({beat, index, frame, length}) => {
-  const enter = spring({frame, fps: FPS, config: {damping: 15, stiffness: 190, mass: 0.6}});
-  const tilt = index % 2 === 0 ? -3 : 2.5;
-  const drift = interpolate(frame, [0, length], [1.04, 1.1], clamp);
+/** The photo fills the frame: it settles in from a slight zoom on the cut, then drifts slowly. */
+const FullPhoto: React.FC<{beat: Beat; frame: number; length: number}> = ({beat, frame, length}) => {
+  const settle = spring({frame, fps: FPS, config: {damping: 20, stiffness: 140, mass: 0.7}});
+  const drift = interpolate(frame, [0, length], [0, 0.05], clamp);
   return (
-    <div
-      style={{
-        position: 'absolute',
-        left: 1385 - CARD_WIDTH / 2,
-        top: 545 - CARD_HEIGHT / 2,
-        width: CARD_WIDTH,
-        height: CARD_HEIGHT,
-        padding: CARD_BORDER,
-        boxSizing: 'border-box',
-        background: '#FFFFFF',
-        borderRadius: 22,
-        boxShadow: '0 30px 60px rgba(0, 0, 0, 0.28)',
-        transform: `translateX(${(1 - enter) * 160}px) rotate(${tilt + (1 - enter) * 4}deg) scale(${0.9 + enter * 0.1})`,
-      }}
-    >
-      <div style={{width: '100%', height: '100%', borderRadius: 12, overflow: 'hidden'}}>
-        <Img
-          src={staticFile(beat.photo)}
-          style={{width: '100%', height: '100%', objectFit: 'cover', transform: `scale(${drift})`}}
-        />
-      </div>
-    </div>
+    <AbsoluteFill>
+      <Img
+        src={staticFile(beat.photo)}
+        style={{width: '100%', height: '100%', objectFit: 'cover', transform: `scale(${1.04 + (1 - settle) * 0.12 + drift})`}}
+      />
+    </AbsoluteFill>
   );
 };
 
 /** Letters appear left to right over 8 frames, each flickering for a few frames as it lands. */
 const Word: React.FC<{beat: Beat; index: number; frame: number}> = ({beat, index, frame}) => {
   const letters = [...beat.word.toUpperCase()];
-  const fontSize = Math.min(200, WORD_MAX_WIDTH / (0.47 * Math.max(letters.length, 1)));
-  const glow = '0 0 10px rgba(255, 255, 255, 0.9), 0 0 28px rgba(255, 255, 255, 0.55)';
+  // Anton averages ~0.47 em per capital; long names shrink to stay on one line.
+  const fontSize = Math.min(WORD_MAX_SIZE, WORD_MAX_WIDTH / (0.47 * Math.max(letters.length, 1)));
   return (
     <div
       style={{
@@ -68,7 +41,7 @@ const Word: React.FC<{beat: Beat; index: number; frame: number}> = ({beat, index
         color: '#FFFFFF',
         whiteSpace: 'pre',
         letterSpacing: 2,
-        textShadow: `${glow}, 7px 7px 0 ${shade(beat.fg)}`,
+        textShadow: '0 0 10px rgba(255, 255, 255, 0.9), 0 0 28px rgba(255, 255, 255, 0.55), 6px 6px 0 rgba(0, 0, 0, 0.45)',
       }}
     >
       {letters.map((letter, k) => {
@@ -87,58 +60,32 @@ const Word: React.FC<{beat: Beat; index: number; frame: number}> = ({beat, index
 };
 
 export const Scene: React.FC<{beat: Beat; index: number; frame: number; length: number}> = ({beat, index, frame, length}) => {
-  const digits = String(beat.number);
-  // Starts a little left of the number so it overlaps the number's left half, but never past the bracket.
-  const wordX = Math.max(WORD_MIN_X, NUMBER_CENTER_X - (digits.length * DIGIT_WIDTH) / 2 - 110);
+  // The tag under the word slides up once the first letters have landed.
+  const tagIn = spring({frame: frame - 3, fps: FPS, config: {damping: 16, stiffness: 200, mass: 0.6}});
   return (
     <AbsoluteFill style={{backgroundColor: beat.bg}}>
-      <PhotoCard beat={beat} index={index} frame={frame} length={length} />
-      <div
-        style={{
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          width: NUMBER_CENTER_X * 2,
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <div style={{position: 'relative'}}>
-          <div
-            style={{
-              transform: `scale(${popScale(frame)})`,
-              transformOrigin: '50% 60%',
-              filter: 'drop-shadow(0 28px 36px rgba(0, 0, 0, 0.35))',
-            }}
-          >
-            <div style={{position: 'relative', fontFamily: fredoka, fontWeight: 700, fontSize: NUMBER_SIZE, lineHeight: 1, color: beat.fg}}>
-              <span style={{position: 'absolute', left: 0, top: 0, color: shade(beat.fg), transform: `translate(${NUMBER_DEPTH}px, ${NUMBER_DEPTH}px)`}}>
-                {digits}
-              </span>
-              <span style={{position: 'relative'}}>{digits}</span>
-            </div>
-          </div>
-          <div
-            style={{
-              position: 'absolute',
-              left: 8,
-              top: 40,
-              fontFamily: fredoka,
-              fontWeight: 700,
-              fontSize: 46,
-              color: '#FFFFFF',
-              letterSpacing: 1,
-              textShadow: `3px 3px 0 ${shade(beat.fg)}`,
-            }}
-          >
-            photo_
-          </div>
-        </div>
-      </div>
-      <div style={{position: 'absolute', left: wordX, top: WORD_CENTER_Y, transform: 'translateY(-50%)'}}>
+      <FullPhoto beat={beat} frame={frame} length={length} />
+      {/* A shade along the bottom keeps the caption readable without hiding the photo. */}
+      <AbsoluteFill style={{background: 'linear-gradient(0deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.22) 28%, rgba(0, 0, 0, 0) 50%)'}} />
+      <div style={{position: 'absolute', left: CAPTION_LEFT, bottom: CAPTION_BOTTOM, display: 'flex', flexDirection: 'column', alignItems: 'flex-start'}}>
         <Word beat={beat} index={index} frame={frame} />
+        <div
+          style={{
+            marginTop: 18,
+            padding: '8px 22px',
+            borderRadius: 999,
+            background: beat.bg,
+            color: luminance(beat.bg) > 0.35 ? '#14161F' : '#FFFFFF',
+            fontFamily: fredoka,
+            fontWeight: 700,
+            fontSize: 40,
+            boxShadow: '0 8px 20px rgba(0, 0, 0, 0.3)',
+            opacity: tagIn,
+            transform: `translateY(${(1 - tagIn) * 24}px)`,
+          }}
+        >
+          {beat.where}
+        </div>
       </div>
     </AbsoluteFill>
   );

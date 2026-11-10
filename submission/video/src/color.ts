@@ -7,8 +7,14 @@ export const mix = (from: string, to: string, amount: number): string => {
   return `#${blended.map((c) => c.toString(16).padStart(2, '0')).join('')}`;
 };
 
-/** The extruded side of the fake-3D number. */
-export const shade = (hex: string): string => mix(hex, '#000000', 0.45);
+/** WCAG relative luminance of a `#RRGGBB` color, 0 (black) to 1 (white). */
+export const luminance = (hex: string): number => {
+  const [r, g, b] = channels(hex).map((c) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
 
 /** The tint the "tint" transition fades to before cutting to `hex`. */
 export const pastel = (hex: string): string => mix(hex, '#FFFFFF', 0.65);
