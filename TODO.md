@@ -6,54 +6,34 @@ The original plan (a public report database with tracking codes, a browse map, a
 
 **Rebuild (2026-11-07).** GullHacks rules forbid code written before the event, and the first version of the app was a pre-event prototype. Starting after hacking opened (Saturday, Nov 7, 12:00), the whole app was rewritten from scratch on branch `feat/rebuild`: new server, new client, new visual identity, same product and API. The prototype's code was deleted, not reused.
 
-**Status (2026-11-07, `feat/rebuild`)**
+**Result.** Fix Please won two prizes at GullHacks 2026 (Nov 7–8): **Winner, Public Systems & Infrastructure** and **Winner, [MLH] Build Your Hackathon A-Team with SpaceXSI**. Devpost: https://devpost.com/software/fixplease. Demo video: https://www.youtube.com/watch?v=sM84YLBRj4I.
+
+**Status (as of 2026-11-09, `main`)**
+- Live at https://fixplease.work on Render, behind Cloudflare. DNS stays at Porkbun (the apex A record points at Render). `/api/health` shows `researchConfigured: true`, and `http://` and `www` redirect (301) to `https://fixplease.work/`. Checked on Nov 9 with `curl`; no full report was run on the live site.
+- Domain: `fixplease.work`, registered at Porkbun on 2026-11-07 (renews 2027-11-07).
+- Only `main` is left. The merged feature branches were deleted locally and on GitHub on Nov 9.
+- No CI (no `.github/`).
+
+Last measured on Nov 7, on the rebuild after the no-photo and HEIC merges:
 - 176/176 tests pass (`npm test`); `tsc --noEmit` and `vite build` are clean.
-- First-load JS is 96.5 kB gzip (82 kB with Brotli, which the server sends), measured after the no-photo and HEIC merges. Leaflet (45 kB), exifr, DOMPurify, and the HEIC decoder (heic-to, 809 kB) load only when needed. 2 font files on first load.
-- Lighthouse mobile on the production build (re-run on merged `main`, 6ce3a95): Performance 98, Accessibility 100, Best Practices 100 on `/`, `/tech`, `/privacy`; LCP 2.1–2.2 s, CLS ≤ 0.037.
+- First-load JS is 96.5 kB gzip (82 kB with Brotli, which the server sends). Leaflet (45 kB), exifr, DOMPurify, and the HEIC decoder (heic-to, 809 kB) load only when needed. 2 font files on first load.
+- Lighthouse mobile on the production build (merged `main`, 6ce3a95): Performance 98, Accessibility 100, Best Practices 100 on `/`, `/tech`, `/privacy`; LCP 2.1–2.2 s, CLS ≤ 0.037.
 - axe: no violations on every page and every flow state (dev scene harness), at 375 and 1440 px.
-- Live end-to-end on the production build, `gemini-3.6-flash` (the default since `7d92769`): photo → search → pin → note → report in 22 s, "Best match" (University of Maryland Facilities Management), report form and phone verified on facilities.umd.edu, no console errors. An earlier run on `gemini-3.5-flash-lite` took 16 s, named Maryland SHA, and downloaded an `.eml` with the photo attached and no EXIF. Same spot, two different offices, both "Best match": another reason to find a demo spot that reaches "Confirmed".
-- **Domain acquired:** `fixplease.work`, registered at Porkbun on 2026-11-07 (renews 2027-11-07), using Porkbun nameservers. It still shows Porkbun's parked page over HTTP, with no HTTPS.
-- Not deployed. No CI (no `.github/`). No deploy CLIs on the dev laptop (`flyctl`, `railway`, `docker`, `cloudflared`).
+- Live end-to-end on a local production build, `gemini-3.6-flash` (the default since `7d92769`): photo → search → pin → note → report in 22 s, "Best match" (University of Maryland Facilities Management), report form and phone verified on facilities.umd.edu, no console errors. An earlier run on `gemini-3.5-flash-lite` took 16 s, named Maryland SHA, and downloaded an `.eml` with the photo attached and no EXIF. Same spot, two different offices, both "Best match".
 
 **Priority legend**
-- **P0**: required for judging and the demo
-- **P1**: should have; fixes honesty or polish gaps a judge could notice
+- **P1**: should have; fixes honesty or polish gaps a user could notice
 - **P2**: stretch
+
+The P0 list (needed for judging and the demo) is finished or no longer needed; see [Done (hackathon)](#done-hackathon).
 
 ---
 
-## Open — P0
+## Open — P1
 
-### Merge the rebuild
-
-- [ ] **Review and merge `feat/rebuild`.** One teammate reviews, then merge into `main`. Nothing from the rebuild has been pushed yet.
-
-### Launch on fixplease.work (in order)
-
-- [ ] **Pick the host.** It needs one long-lived Node 24 process. The bot check and rate limits live in memory, so run exactly one instance. Avoid free tiers that sleep when idle: the first visitor after a nap waits through a cold start. Options: Render (Starter), Railway, Fly.io, or a small VM with Caddy for automatic TLS. Whoever owns the account adds the team.
-- [ ] **Production Gemini key.** Create a dedicated key in a billed project with Search grounding enabled (search grounding is a paid-tier feature). Set a budget alert or spending cap: anyone who loads the public site can spend from it, within the rate limits.
-- [ ] **Deploy.** Build with `npm ci && npm run build`, start with `npm start`. Environment:
-  - `GEMINI_API_KEY`: the production key, set in the host's secret settings only
-  - `HOST=0.0.0.0`, and `PORT` from the host if it assigns one
-  - `TRUST_PROXY=1`, or the real number of proxy hops, so rate limits see visitor IPs
-  - `GEOCODER_USER_AGENT=FixPlease/2.0 (+https://fixplease.work; <contact email>)`: the OSM usage policy requires a real contact
-  - `OVERPASS_URL`: a working Overpass instance (see P1)
-  - `RESEARCH_RATE_LIMIT`: raise it for demo day (see below)
-  - `CAPTCHA_SECRET`: optional; a long random value
-- [ ] **DNS at Porkbun.** Delete the parked-page records for the apex and `www`, then add the records the host gives you: usually ALIAS/A for `fixplease.work` and CNAME for `www`. Make the apex canonical and redirect `www` to it.
-- [ ] **HTTPS.** Let the host issue certificates for `fixplease.work` and `www.fixplease.work` and force HTTP→HTTPS. Camera capture, "I'm standing here", and the bot check all need HTTPS. Add HSTS only after HTTPS has worked for a while.
-- [ ] **Keep the Host header intact.** `/api/investigate` rejects any request whose `Origin` host doesn't match the `Host` header (`isSameOrigin` in `server/app.ts`). A proxy or CDN that rewrites `Host` breaks report generation while everything else still looks fine.
-- [ ] **Smoke test on the live domain**:
-  - `https://fixplease.work/api/health` shows `researchConfigured: true`
-  - Address search and pin context load
-  - One full report end to end
-  - `http://` and `www` redirect to `https://fixplease.work`
-  - No console errors
-- [ ] **Point docs at the live URL.** In the README, "Try it on your phone" becomes "open https://fixplease.work", and the tunnel becomes a local-only fallback. Add host-specific steps to Deploy. Add the live link to `submission/submission.md`.
-- [ ] **Demo rate limit.** Set `RESEARCH_RATE_LIMIT` well above the default of 5 per 15 min per IP. Everyone on venue Wi-Fi shares one IP.
-
-### App and demo
-
+- [ ] **Smoke test a full report on the live site.** Run one report end to end on https://fixplease.work and check the console for errors. This also proves the proxy keeps the `Host` header: `/api/investigate` rejects any request whose `Origin` host doesn't match `Host` (`isSameOrigin` in `server/app.ts`), so a rewrite would break reports while everything else looks fine.
+- [ ] **Spending cap on the live key.** Anyone who loads the public site can spend from the Gemini key, within the rate limits. Confirm the billed project has a budget alert or spending cap.
+- [ ] **Deploy notes.** Add the Render setup (build and start commands, environment variables, custom domain) to the README's Deploy section.
 - [ ] **Real-device pass on iPhone Safari and Android Chrome**, on https://fixplease.work:
   - Take a photo (rear camera) and From your library, and the "Report without a photo" path (text-only Share)
   - Confirm iPhone HEIC photos open from the library and the camera (Safari decodes them natively), and that a HEIC on Android Chrome converts through heic-to
@@ -68,17 +48,11 @@ The original plan (a public report database with tracking codes, a browse map, a
   - Rate-limit message
   - Cancel investigation
   - Slow network
-  - No console errors through the demo flow
-- [ ] **Find a demo spot that reaches "Confirmed on an official site".** Test runs so far ended at "Best match". Try a few spots on numbered state routes, where the state road agency publishes which roads it maintains.
-- [ ] **Record the video** from `submission/video-script.md` (~2:30, one real issue, no staged evidence).
-- [ ] **Record a backup** of the full flow in case Wi-Fi or geolocation fails on stage.
-- [ ] **Submit to Devpost** using `submission/submission.md`; add team members.
-- [ ] **README:** add screenshots or a GIF and team members.
-
-## Open — P1
-
-- [ ] **Overpass is unreliable.** The public `overpass-api.de` returned 502s and timeouts all afternoon on Nov 7, and two mirrors timed out too, so road, route-number, campus, and streetlight facts were missing (context marked partial; Census and Nominatim still answered). Point `OVERPASS_URL` at an instance that answers, or self-host, before the demo.
-- [ ] **Domain email.** Set up Porkbun email forwarding for something like `hello@fixplease.work`. Use it in `GEOCODER_USER_AGENT` and as the contact on the site and in the submission.
+  - No console errors through the report flow
+- [ ] **Find spots that reach "Confirmed on an official site".** Test runs so far ended at "Best match". Try a few spots on numbered state routes, where the state road agency publishes which roads it maintains.
+- [ ] **README:** add screenshots or a GIF.
+- [ ] **Overpass is unreliable.** The public `overpass-api.de` returned 502s and timeouts all afternoon on Nov 7, and two mirrors timed out too, so road, route-number, campus, and streetlight facts were missing (context marked partial; Census and Nominatim still answered). Point `OVERPASS_URL` at an instance that answers, or self-host.
+- [ ] **Domain email.** Set up Porkbun email forwarding for something like `hello@fixplease.work`. Use it in `GEOCODER_USER_AGENT` and as the contact on the site.
 - [ ] **Screen-reader pass** (VoiceOver on iPhone, NVDA on Windows) through the whole flow. Automated checks are in the Status block.
 - [ ] **CI:** add a GitHub Actions workflow for `npm ci` → `npm test` → `npm run build`. The remote is `github.com/killerfrost22/gullhacks26-Infra`.
 - [ ] **Campus fallback is weak.** When Overpass fails, the campus comes from Nominatim's reverse lookup, which finds it only if the mapped object at the pin is the university itself (at the UMD pin it returned a ChargePoint charger).
@@ -96,6 +70,18 @@ The original plan (a public report database with tracking codes, a browse map, a
 - [ ] Shared store for rate limits and captcha replay state, so more than one instance can run. Both are in memory now.
 
 ---
+
+## Done (hackathon)
+
+- [x] Merged `feat/rebuild` (PR #1), `feat/heic-photos` (PR #3), and `feat/report-without-photo` into `main`.
+- [x] Deployed on Render with a Gemini key set; Porkbun DNS points `fixplease.work` at it, with HTTPS, and `http://` and `www` redirect to `https://fixplease.work`.
+- [x] README points at the live site; the tunnel is now only for testing local changes on a phone.
+- [x] Recorded the demo video: https://www.youtube.com/watch?v=sM84YLBRj4I
+- [x] Submitted to Devpost: https://devpost.com/software/fixplease
+- [x] Team members in the README.
+- [x] Won Public Systems & Infrastructure and [MLH] Build Your Hackathon A-Team with SpaceXSI.
+
+No longer needed after the event: a backup recording for the stage, and raising `RESEARCH_RATE_LIMIT` for venue Wi-Fi.
 
 ## Done (rebuild)
 
@@ -140,6 +126,6 @@ These conflict with the no-accounts / no-database design or were superseded by w
 - [x] A user can photograph an issue, set the location (photo GPS, device, search, or pin), add a note, and get the responsible office plus an editable email with the photo attached.
 - [x] The app never makes up an office name; an unidentified office shows only map facts.
 - [x] Flow is usable keyboard-only.
-- [ ] Live at https://fixplease.work over HTTPS (with `www` and `http://` redirecting).
+- [x] Live at https://fixplease.work over HTTPS (with `www` and `http://` redirecting).
 - [ ] Verified on iOS Safari and Android Chrome.
 - [ ] No console errors in the demo flow on the live site.

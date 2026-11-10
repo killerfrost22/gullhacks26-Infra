@@ -4,9 +4,10 @@ Spot a pothole, a dead streetlight, or something broken on campus? Take a photo,
 
 Built for phones first. Works on desktop too.
 
-Our GullHacks 2026 project. This repo (`gullhacks26-Infra`) is where the team keeps building it.
+Built at [GullHacks 2026](https://gullhacks2026.devpost.com/) (Salisbury University, Nov 7–8, 2026), where it won two prizes. This repo (`gullhacks26-Infra`) is where the team keeps building it.
 
 ## Contents
+- [Awards](#awards)
 - [Team](#team)
 - [Abstract](#abstract)
 - [Introduction](#introduction)
@@ -24,27 +25,37 @@ Our GullHacks 2026 project. This repo (`gullhacks26-Infra`) is where the team ke
 - [API](#api)
 - [Credits](#credits)
 
+## Awards
+
+- **Winner, Public Systems & Infrastructure**, GullHacks 2026
+- **Winner, [MLH] Build Your Hackathon A-Team with SpaceXSI**, GullHacks 2026
+
+Devpost: <https://devpost.com/software/fixplease> · Demo video: <https://www.youtube.com/watch?v=sM84YLBRj4I>
+
 ## Team
-| Name | Role | GitHub |
+| Name | Role | Profile |
 |---|---|---|
 | Nyles Burton | Documentation | [@NBurtonII](https://github.com/NBurtonII) |
 | Gabby Ao | Business Analyst | [@gabbyao](https://github.com/gabbyao) |
 | Yizhan Ao | Programmer | [@killerfrost22](https://github.com/killerfrost22) |
-| Padma Waiba | Testing |[@ybajames](ybajames23@gmail.com) |
+| Padma Waiba | Testing | Devpost [@ybajames23](https://devpost.com/ybajames23) |
 
 ## Abstract
 Fix Please is an AI-powered tool that lets users photograph public infrastructure issues, pin the location, and add a short description. In return, they receive an explanation of who is responsible, how to contact them, and a ready-to-send email with the photo attached so they can make their voices heard.
- 
+
 ## Introduction
 Public infrastructure is a huge cause of frustration and distrust between the members of a community and its governing bodies. Residents live with these problems daily and watch them go unresolved for months. Some of these issues are small, some are large, but all build upon one another and cause people to feel as though the local government does not care about their needs or the community. To this end we created Fix Please, a phone-first web app that helps residents figure out who is responsible for a problem and gives them the words to say something about it.
- 
-For the GullHack Hackathon, we will focus on obvious physical environment issues. We want residents to be able to report excessive litter, potholes, broken light fixtures, etc. This system could be easily expanded, but we want to ensure that we are being realistic in what we can accomplish in our time.
- 
-Fix Please does not store reports or send anything on the user's behalf. There are no accounts and no database: the user reviews the drafted email and sends it from their own account. Embedding the tool in local government websites is a goal for future work (see [Future Work](#future-work)).
- 
+
+For GullHacks we focused on obvious physical problems: excessive litter, potholes, broken light fixtures, and the like. The system could be expanded, but we kept the scope to what we could build in the time we had.
+
+Fix Please does not store reports or send anything on the user's behalf. There are no accounts and no database: the user reviews the drafted email and sends it from their own account. Embedding the tool in local government websites is a goal for future work (see [What's next](submission/submission.md#whats-next-for-fix-please)).
+
 ## Demo
 - Live site: https://fixplease.work
+- Devpost: https://devpost.com/software/fixplease
+- Demo video: https://www.youtube.com/watch?v=sM84YLBRj4I
 - Demo Jurisdiction: Salisbury University campus and Princess Anne / University of Maryland Eastern Shore (TBC)
+
 ## Features
 1. Users provide the information for a report:
     - One photo (take one on a phone or upload from the library), or none: "Report without a photo" lets someone who saw it while driving report it later, and then the description is required
@@ -91,22 +102,23 @@ flowchart LR
 flowchart TD
     R[Resident<br/>photo, pin, optional note] --> FE[React web app<br/>phone-first]
     FE --> BE
- 
+
     subgraph BE[Express API]
         direction LR
         BC[Bot check<br/>ALTCHA + rate limits] --> RES[Gemini research<br/>Search grounding + URL context] --> FMT[Gemini formatting<br/>structured output] --> EV[Evidence checks<br/>sources must load and match]
     end
- 
+
     RES <--> GEM[Gemini API]
     BE <--> MAP[Map context<br/>Nominatim, Overpass, Census]
     BE --> OUT[Result<br/>office, contacts, sources, editable email]
     OUT --> SEND[Resident sends the email<br/>share sheet, .eml, mail app, copy]
 ```
- 
+
 ### Input
  - Photo
  - Text description (optional)
  - Location (photo GPS, device location, address search, or pin)
+
 ### Processing
 - Photo is resized and re-encoded on the device, which strips its EXIF data
 - Location confirmation and map context for the pin
@@ -115,12 +127,14 @@ flowchart TD
 - Responsible agency search
 - Contact lookup
 - Evidence checks (cited pages must load, and contact details must appear on an official page)
+
 ### Output
 - Issue Summary
 - Responsible Agency and confidence level
 - Contact Info with source links
 - Warnings and a "How we know" source list
 - Editable Email with the photo attached
+
 ## Run it locally
 
 You need:
@@ -164,7 +178,9 @@ The API runs on `PORT` from `.env` (default 8787) and Vite proxies `/api` to wha
 
 ## Try it on your phone
 
-Location access and the bot check need HTTPS, so use a production build behind a tunnel:
+Open <https://fixplease.work>. In Safari or Chrome, "Add to Home Screen" installs it like an app.
+
+To try your own changes on a phone: location access and the bot check need HTTPS, so run a production build behind a tunnel:
 
 ```powershell
 npm run build
@@ -172,7 +188,7 @@ npm start                                      # app + API on PORT
 npx cloudflared tunnel --url http://127.0.0.1:8787   # use your PORT if you changed it
 ```
 
-Open the `https://….trycloudflare.com` address it prints. In Safari or Chrome, "Add to Home Screen" installs it like an app. Stop the tunnel when you're done; anyone with the link can use your Gemini key while it runs.
+Open the `https://….trycloudflare.com` address it prints. Stop the tunnel when you're done; anyone with the link can use your Gemini key while it runs.
 
 Demoing on shared venue Wi-Fi? Everyone shows up as one address, so raise `RESEARCH_RATE_LIMIT` in `.env` (default 5 reports per 15 minutes).
 
@@ -212,7 +228,7 @@ shared/types.ts            Types shared by the server and the app
 public/                    Favicon, app icons, web app manifest, share image
 docs/                      Model benchmark write-up and other docs
 benchmarks/gemini-models/  Model benchmark script, test photos, and raw results
-submission/                Devpost write-up and video script
+submission/                Devpost write-up, demo video script, thumbnail; video/ is the Remotion photo video
 TODO.md                    Feature roadmap
 ```
 
